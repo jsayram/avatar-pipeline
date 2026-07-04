@@ -1,7 +1,111 @@
 # HANDOFF — resume prompt for an AI agent
 
 > Give this file to an AI agent (e.g. Claude Code) to continue this project.
-> Last updated: **2026-07-04 UTC (web dashboard Phase 4 partial: WaveSpeed balance panel implemented)**
+> Last updated: **2026-07-04 UTC (web dashboard Phase 5 COMPLETE — the
+> docs/WEB-UI-PLAN.md workstream is now fully implemented, phases 1–5)**
+>
+> **Current status: dashboard code-complete. 249 tests passing.**
+> Phase 5 work this session (Claude Code, same session as Phase 4 below):
+> - **Host-header guard** (cheap CSRF/DNS-rebinding protection): POST/PUT/
+>   DELETE are rejected with 403 unless the Host header is localhost/
+>   127.0.0.1/::1 or ends in `.ts.net`. GET stays unguarded. Verified live
+>   with curl (evil host POST → 403, evil host GET → 200, localhost POST →
+>   422 validation). NOTE FOR TEST AUTHORS: `tests/test_dashboard.py` now
+>   uses a `make_client()` helper (base_url `http://127.0.0.1`) because
+>   TestClient's default `testserver` host trips the guard — use it for any
+>   new dashboard tests with mutating requests.
+> - **Title-badge attention cue**: tab title becomes `(1) Avatar Pipeline` +
+>   amber canvas-drawn favicon dot while an approval is pending (green when
+>   idle); driven by the existing 8s `/api/pending` poll, cleared on
+>   resolution. No Web Notifications API (per plan). Verified in-browser.
+> - **Telegram-disabled verification test**: locks in that the dashboard
+>   works as the SOLE approval surface — with `telegram.enabled: false` the
+>   real `worker._notify` raises `TelegramNotConfigured` internally, warns,
+>   and the dispatch completes anyway (it's a `TelegramError` subclass and
+>   `_notify` catches those by design).
+> - **Docs**: SETUP.md §5b (run command, launchd plist install via
+>   `launchctl bootstrap` — NOT `kickstart -k`, see the launchd gotcha in
+>   the Tailscale entry below — `tailscale serve --bg 8190`, env knobs,
+>   security posture), README.md docs-table row, docs/WEB-UI-PLAN.md status
+>   line flipped to "ALL PHASES IMPLEMENTED" with the one design deviation
+>   noted (`GET /api/cosines` instead of extending /api/status).
+> - Modified this slice: `scripts/dashboard.py` (guard), `scripts/static/
+>   app.js` (badge), `tests/test_dashboard.py` (+3 tests, make_client
+>   refactor), `SETUP.md`, `README.md`, `docs/WEB-UI-PLAN.md`.
+> - **Next steps (operator or next agent):**
+>   1. Commit everything (operator does commits/pushes; the four Phase 4
+>      lib/test files are still untracked).
+>   2. The :8190 process still runs PRE-Phase-4 code (older session owns
+>      it, couldn't be killed from this one) — kill + restart it or install
+>      the launchd plist per SETUP.md §5b, then `tailscale serve --bg 8190`.
+>   3. Optional polish only: nothing from docs/WEB-UI-PLAN.md remains
+>      unimplemented. The plan's "deliberately out of scope" list (service
+>      restart buttons, cosine_min editing, job cancel, links.numbers
+>      writes) is intentional — don't re-add casually.
+>
+> Previous entry: **2026-07-04 UTC (web dashboard Phase 4 COMPLETE: Tailscale
+> panel + funnel warning, RunPod pods, cosine mini-chart; smoke test done)**
+>
+> **Current status: Phase 4 complete, smoke-tested. 244 tests passing.**
+> Work this session (Claude Code):
+> - Found `scripts/lib/tailscale_status.py`, `scripts/lib/runpod_pods.py` +
+>   their tests already written (by a prior session) but UNWIRED — no
+>   endpoints, no UI. Wired them in:
+>   `GET /api/tailscale` (60s cache, `force=true` bypass),
+>   `GET /api/runpod/pods` (60s cache; `running_cost_per_hr` summed over
+>   RUNNING pods; graceful `configured:false` when `RUNPOD_API_KEY` unset),
+>   `GET /api/cosines` (done.csv identity_cosine history +
+>   `identity.cosine_min` threshold, no cache — file is tiny).
+> - New UI panels in `scripts/static/`: Tailscale (host/tailnet/served/
+>   funneled + red top-of-page banner when `dashboard_funneled` — banner
+>   visually verified by injecting the state in-browser), RunPod (pod rows,
+>   RUNNING pods deliberately shown with the alert-colored dot since a
+>   running pod = active billing), Identity Gate (SVG sparkline, threshold
+>   dashed line, green/red dots per gate outcome, e.g. "0/7 ≥ 0.88").
+> - **FIXED TWO REAL BUGS in the prior session's unwired modules:**
+>   (1) `_extract_ports` Web-map parsing: keys like `"https://443"` fed
+>   `int("//443")` → every Web entry silently dropped (the module's own
+>   test failed; now passes).
+>   (2) MORE IMPORTANT — real `tailscale serve status --json` output keys
+>   `AllowFunnel` as `"host.tailnet.ts.net:443"` (verified against the live
+>   CLI, not guessed), NOT bare `"443"` as the original mocks assumed. The
+>   old parser found NO funneled ports on real data, meaning **the
+>   dashboard-funneled security warning could never fire in production**.
+>   Fixed + regression tests using the real captured shape
+>   (`TestRealCliShapes` in tests/test_tailscale_status.py).
+> - **FIXED CORRUPT `done.csv`** (live state file): one row had been
+>   appended without a trailing newline, merging two records
+>   (`...flagged:identity_gate2026-07-03,ZP8GDQ3CM,...`) — this silently
+>   broke CSV parsing for ZP8smK3Uj and swallowed ZP8GDQ3CM entirely in
+>   every consumer (status sheet, dashboard). Repaired in place; original
+>   preserved as `done.csv.bak` (gitignored). Root cause not identified —
+>   `append_done_csv` uses csv.writer which always terminates rows, so the
+>   corruption likely came from a manual/agent raw-write. If it recurs,
+>   suspect whatever writes done.csv outside `lib/state.py`.
+> - Smoke test done per the previous continuation note: desktop + mobile
+>   (375px, stacks to one column), zero console errors, all panels render
+>   against live data (real balance $6.23, real Funnel 443 detected, real
+>   cosine history 7 points all below the 0.88 threshold).
+> - **GOTCHA:** the long-running dashboard process on **:8190 still runs
+>   PRE-SESSION code** — it was started by an earlier session and this
+>   session was prevented from killing another agent's process. Smoke
+>   testing ran on **:8191** (via `.claude/launch.json`, gitignored). Next
+>   step for whoever owns that process (or the operator):
+>   `kill <pid of scripts/dashboard.py>` and restart, or just install the
+>   launchd plist (`ops/launchd/com.jramirez.avatar.dashboard.plist`) and
+>   let it own the service, then `tailscale serve --bg 8190`.
+> - Modified: `scripts/dashboard.py`, `scripts/static/{index.html,app.js,
+>   style.css}`, `scripts/lib/tailscale_status.py`, `tests/test_dashboard.py`
+>   (+6), `tests/test_tailscale_status.py` (+2), `.gitignore`, `done.csv`
+>   (repair). New (untracked, from prior session, now wired):
+>   `scripts/lib/{tailscale_status,runpod_pods}.py` + their test files.
+> - **Next steps:** (1) commit the untracked Phase 4 files + this session's
+>   changes (operator does commits/pushes); (2) restart :8190 with current
+>   code / install the launchd plist + tailscale serve (see gotcha);
+>   (3) Phase 5 remains: host-header guard, title-badge attention cue,
+>   telegram-disabled verification test, theme polish, README/SETUP docs.
+>
+> Previous entry: **2026-07-04 UTC (web dashboard Phase 4 partial: WaveSpeed balance panel implemented)**
 > — two separate pieces of work in one session:
 >
 > **(B) Web dashboard Phase 1 + Phase 2 + Phase 3 + Phase 4 WaveSpeed

@@ -11,6 +11,13 @@ from lib.pending import save_pending
 from lib.state import load_state, mark_flagged, mark_processed
 
 
+def make_client(app):
+    """TestClient whose requests carry an allowed Host (the host-header
+    guard rejects mutating requests from unknown hosts, and the default
+    base_url of http://testserver would trip it)."""
+    return TestClient(app, base_url="http://127.0.0.1")
+
+
 def wait_job(client, job_id):
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline:
@@ -40,7 +47,7 @@ def test_status_endpoint_adds_safe_output_media_url(monkeypatch, make_config):
         }]
 
     monkeypatch.setattr(dashboard, "build_status_rows", fake_rows)
-    client = TestClient(dashboard.create_app(make_config()))
+    client = make_client(dashboard.create_app(make_config()))
 
     payload = client.get("/api/status").json()
 
@@ -67,7 +74,7 @@ def test_pending_endpoint_exposes_only_work_media(make_config):
         frame1_path=str(frame),
         avatar_frame_path=str(avatar),
     )
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     payload = client.get("/api/pending").json()["pending"]
 
@@ -84,7 +91,7 @@ def test_media_routes_reject_traversal_and_disallowed_extensions(make_config, tm
     run.mkdir(parents=True)
     (run / "notes.txt").write_text("private")
     (tmp_path / "secret.png").write_bytes(b"secret")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     assert client.get("/api/media/work/abc123/notes.txt").status_code == 404
     assert client.get("/api/media/out/%2E%2E/secret.png").status_code == 404
@@ -96,7 +103,7 @@ def test_logs_endpoint_uses_allowlist(make_config):
     run = cfg.paths.work_dir / "abc123"
     run.mkdir(parents=True)
     (run / "run.log").write_text("one\ntwo\n")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     payload = client.get("/api/logs/run:abc123?lines=1").json()
 
@@ -123,7 +130,7 @@ def test_submit_link_queues_prepare_and_archives(monkeypatch, make_config):
                         lambda path, url: calls.append(("archive", str(path), url)))
     monkeypatch.setattr(dashboard, "update_processing_note",
                         lambda path, url, note: calls.append(("note", str(path), url, note)))
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/links", json={"url": "https://www.tiktok.com/t/ABC123/"})
 
@@ -140,7 +147,7 @@ def test_submit_link_rejects_when_pending_exists(make_config):
     cfg = load_config(config_path)
     save_pending(cfg.paths.work_dir, "abc123", stage="frame", url="https://example.com",
                  ref_video_path="/w/ref.mp4", frame1_path="/w/frame.png")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/links", json={"url": "https://www.tiktok.com/t/NEW123/"})
 
@@ -161,7 +168,7 @@ def test_run_next_queues_next_sheet_url(monkeypatch, make_config):
         return {"status": "pending_approval", "id": tiktok_id, "stage": "frame"}, 0
 
     monkeypatch.setattr(dashboard.worker, "run_prepare", fake_run_prepare)
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/queue/run-next")
 
@@ -175,7 +182,7 @@ def test_run_next_returns_204_when_queue_empty(monkeypatch, make_config):
     config_path = make_config()
     monkeypatch.setattr(dashboard.pick_next, "ensure_local_copy", lambda numbers_path, logger: None)
     monkeypatch.setattr(dashboard.pick_next, "read_urls", lambda numbers_path: [])
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/queue/run-next")
 
@@ -200,7 +207,7 @@ def test_decision_endpoint_maps_frame_yes_to_generate_avatar(monkeypatch, make_c
             0,
         ),
     )
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/pending/abc123/decision",
                            json={"stage": "frame", "decision": "yes"})
@@ -218,7 +225,7 @@ def test_decision_endpoint_rejects_stage_mismatch(make_config):
     save_pending(cfg.paths.work_dir, "abc123", stage="avatar", url="https://example.com",
                  ref_video_path="/w/ref.mp4", frame1_path="/w/frame.png",
                  avatar_frame_path="/w/avatar.png")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/pending/abc123/decision",
                            json={"stage": "frame", "decision": "yes"})
@@ -232,7 +239,7 @@ def test_decision_endpoint_rejects_claim_held(make_config):
     save_pending(cfg.paths.work_dir, "abc123", stage="frame", url="https://example.com",
                  ref_video_path="/w/ref.mp4", frame1_path="/w/frame.png")
     try_claim(cfg.paths.work_dir, "abc123", "telegram")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/pending/abc123/decision",
                            json={"stage": "frame", "decision": "yes"})
@@ -246,7 +253,7 @@ def test_unflag_endpoint_removes_flagged_state(make_config):
     cfg = load_config(config_path)
     mark_processed(cfg.paths.processed_json, "processed-id")
     mark_flagged(cfg.paths.processed_json, "flagged-id")
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.post("/api/flagged/flagged-id/unflag")
 
@@ -258,7 +265,7 @@ def test_unflag_endpoint_removes_flagged_state(make_config):
 
 def test_provider_endpoint_reports_base_and_effective_values(make_config):
     config_path = make_config()
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     payload = client.get("/api/config/providers").json()
 
@@ -280,7 +287,7 @@ def test_wavespeed_balance_endpoint_returns_cached_balance(monkeypatch, make_con
         return 42.5
 
     monkeypatch.setattr(dashboard, "get_balance", fake_get_balance)
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     first = client.get("/api/wavespeed/balance").json()
     second = client.get("/api/wavespeed/balance").json()
@@ -302,7 +309,7 @@ def test_wavespeed_balance_endpoint_reports_missing_key(monkeypatch, make_config
         "get_balance",
         lambda cfg: (_ for _ in ()).throw(AssertionError("should not call WaveSpeed")),
     )
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.get("/api/wavespeed/balance")
 
@@ -322,7 +329,7 @@ def test_wavespeed_balance_endpoint_reports_provider_error(monkeypatch, make_con
         raise dashboard.WaveSpeedBalanceError("balance endpoint returned 401")
 
     monkeypatch.setattr(dashboard, "get_balance", fake_get_balance)
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.get("/api/wavespeed/balance")
 
@@ -336,7 +343,7 @@ def test_wavespeed_balance_endpoint_reports_provider_error(monkeypatch, make_con
 
 def test_provider_put_writes_overlay_and_changes_effective_config(make_config):
     config_path = make_config()
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.put("/api/config/providers", json={
         "avatar_frame_provider": "wavespeed_seedream",
@@ -365,7 +372,7 @@ def test_provider_put_invalid_value_rolls_back_previous_overlay(make_config):
         animation_provider="mock",
         wavespeed_enabled=False,
     )
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.put("/api/config/providers", json={
         "avatar_frame_provider": "bad-provider",
@@ -387,7 +394,7 @@ def test_provider_delete_reverts_to_config_yaml(make_config):
         animation_provider="mock",
         wavespeed_enabled=False,
     )
-    client = TestClient(dashboard.create_app(config_path))
+    client = make_client(dashboard.create_app(config_path))
 
     response = client.delete("/api/config/providers")
 
@@ -397,3 +404,167 @@ def test_provider_delete_reverts_to_config_yaml(make_config):
     cfg = load_config(config_path)
     assert cfg.avatar_frame.provider == "local_comfyui"
     assert cfg.animation.provider == "local_comfyui"
+
+
+def test_tailscale_endpoint_caches_and_flags_funnel(monkeypatch, make_config):
+    calls = []
+
+    def fake_full_status():
+        calls.append(1)
+        return {
+            "node": {"available": True, "hostname": "mac", "online": True, "tailnet": "t.ts.net"},
+            "serve": {
+                "available": True,
+                "served_ports": [8190],
+                "funneled_ports": [8190],
+                "dashboard_funneled": True,
+            },
+        }
+
+    monkeypatch.setattr(dashboard, "get_full_status", fake_full_status)
+    client = make_client(dashboard.create_app(make_config()))
+
+    first = client.get("/api/tailscale").json()
+    second = client.get("/api/tailscale").json()
+
+    assert first["node"]["hostname"] == "mac"
+    assert first["serve"]["dashboard_funneled"] is True
+    assert "checked_at" in first
+    assert second == first
+    assert calls == [1]
+
+
+def test_runpod_endpoint_reports_not_configured(monkeypatch, make_config):
+    monkeypatch.delenv("RUNPOD_API_KEY", raising=False)
+    client = make_client(dashboard.create_app(make_config()))
+
+    payload = client.get("/api/runpod/pods").json()
+
+    assert payload["ok"] is False
+    assert payload["configured"] is False
+    assert payload["pods"] == []
+    assert "RUNPOD_API_KEY" in payload["detail"]
+
+
+def test_runpod_endpoint_sums_running_cost(monkeypatch, make_config):
+    def fake_get_pods():
+        return {
+            "configured": True,
+            "pods": [
+                {"id": "a", "name": "one", "status": "RUNNING", "gpu_type": "RTX 4090", "cost_per_hr": 0.44},
+                {"id": "b", "name": "two", "status": "EXITED", "gpu_type": "RTX A5000", "cost_per_hr": 0.29},
+            ],
+        }
+
+    monkeypatch.setattr(dashboard, "get_pods", fake_get_pods)
+    client = make_client(dashboard.create_app(make_config()))
+
+    payload = client.get("/api/runpod/pods").json()
+
+    assert payload["ok"] is True
+    assert payload["configured"] is True
+    assert len(payload["pods"]) == 2
+    assert payload["running_cost_per_hr"] == 0.44
+
+
+def test_runpod_endpoint_reports_api_error(monkeypatch, make_config):
+    def fake_get_pods():
+        raise dashboard.RunPodError("pods endpoint returned 401")
+
+    monkeypatch.setattr(dashboard, "get_pods", fake_get_pods)
+    client = make_client(dashboard.create_app(make_config()))
+
+    payload = client.get("/api/runpod/pods").json()
+
+    assert payload["ok"] is False
+    assert payload["configured"] is True
+    assert payload["detail"] == "pods endpoint returned 401"
+
+
+def test_cosines_endpoint_returns_history_and_threshold(make_config):
+    config_path = make_config()
+    cfg = load_config(config_path)
+    cfg.paths.done_csv.write_text(
+        "date,id,url,output_path,identity_cosine,status\n"
+        "2026-07-02,AAA,https://t/a,,0.56,flagged:identity_gate\n"
+        "2026-07-03,BBB,https://t/b,,,flagged:download\n"
+        "2026-07-03,CCC,https://t/c,/out/c.mp4,0.91,published\n",
+        encoding="utf-8",
+    )
+    client = make_client(dashboard.create_app(config_path))
+
+    payload = client.get("/api/cosines").json()
+
+    assert payload["threshold"] == cfg.identity.cosine_min
+    assert [p["id"] for p in payload["points"]] == ["AAA", "CCC"]
+    assert payload["points"][1]["cosine"] == 0.91
+
+
+def test_cosines_endpoint_empty_when_no_done_csv(make_config):
+    client = make_client(dashboard.create_app(make_config()))
+    payload = client.get("/api/cosines").json()
+    assert payload["points"] == []
+    assert payload["threshold"] > 0
+
+
+def test_host_guard_rejects_unknown_host_on_mutating_requests(make_config):
+    client = make_client(dashboard.create_app(make_config()))
+
+    response = client.post(
+        "/api/links",
+        json={"url": "https://www.tiktok.com/t/ZPfake/"},
+        headers={"host": "evil.example.com"},
+    )
+
+    assert response.status_code == 403
+    assert "localhost" in response.json()["detail"]
+
+
+def test_host_guard_allows_tailnet_and_localhost_and_reads(make_config):
+    client = make_client(dashboard.create_app(make_config()))
+
+    # GET is never guarded, even from an unknown host.
+    assert client.get("/api/health", headers={"host": "evil.example.com"}).status_code == 200
+    # Tailnet hostname passes the guard (422 = validation ran, not 403).
+    tailnet = client.post(
+        "/api/links",
+        json={"url": "not-a-tiktok-url"},
+        headers={"host": "jr-m1max.tail1234.ts.net"},
+    )
+    assert tailnet.status_code == 422
+    # localhost passes too.
+    local = client.post("/api/links", json={"url": "not-a-tiktok-url"})
+    assert local.status_code == 422
+
+
+def test_decisions_work_with_telegram_disabled(monkeypatch, make_config):
+    """The dashboard must work as the SOLE approval surface: with
+    telegram.enabled false (conftest default), the real worker._notify runs,
+    raises TelegramNotConfigured internally, warns, and the dispatch still
+    completes."""
+    config_path = make_config()
+    cfg = load_config(config_path)
+    assert cfg.telegram.enabled is False
+    save_pending(cfg.paths.work_dir, "vid9", stage="frame", url="https://example.com",
+                 ref_video_path="/w/ref.mp4", frame1_path="/w/frame.png")
+    calls = []
+
+    # NOTE: worker._notify deliberately NOT monkeypatched — the real one runs.
+    monkeypatch.setattr(
+        dashboard.worker,
+        "run_generate_avatar",
+        lambda cfg, tiktok_id, work, logger: (
+            calls.append(tiktok_id)
+            or {"status": "pending_approval", "id": tiktok_id, "stage": "avatar"},
+            0,
+        ),
+    )
+    client = make_client(dashboard.create_app(config_path))
+
+    response = client.post("/api/pending/vid9/decision",
+                           json={"stage": "frame", "decision": "yes"})
+
+    assert response.status_code == 202
+    job = wait_job(client, response.json()["id"])
+    assert job["state"] == "done"
+    assert calls == ["vid9"]

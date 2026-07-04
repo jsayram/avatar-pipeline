@@ -11,6 +11,7 @@ and drops it in an output folder for review.
 | File | What |
 |------|------|
 | [SETUP.md](SETUP.md) | **Start here to run it** — install, configure, services, n8n import, dry-run, WaveSpeed opt-in |
+| [docs/WEB-UI-PLAN.md](docs/WEB-UI-PLAN.md) | Web dashboard (mission-control UI on :8190) — design doc; run/install steps in SETUP.md §5b |
 | [comfyui/README.md](comfyui/README.md) | How to export the two ComfyUI API workflows (required before first run) |
 | [docs/PRODUCT-SPEC.md](docs/PRODUCT-SPEC.md) | Authoritative product spec, requirements, contracts, milestones |
 | [docs/accii-diagram-avatar-pipe.md](docs/accii-diagram-avatar-pipe.md) | **Start here** — ASCII diagram of the whole flow |

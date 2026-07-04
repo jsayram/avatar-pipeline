@@ -59,9 +59,31 @@ function setMedia(container, url, type) {
   container.appendChild(el);
 }
 
+const BASE_TITLE = document.title;
+let faviconLink = null;
+
+function updateAttentionCue(hasPending) {
+  document.title = hasPending ? `(1) ${BASE_TITLE}` : BASE_TITLE;
+  if (!faviconLink) {
+    faviconLink = document.createElement("link");
+    faviconLink.rel = "icon";
+    document.head.appendChild(faviconLink);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = hasPending ? "#f3bf4f" : "#41d180";
+  ctx.beginPath();
+  ctx.arc(16, 16, 12, 0, Math.PI * 2);
+  ctx.fill();
+  faviconLink.href = canvas.toDataURL("image/png");
+}
+
 function renderPending(payload) {
   const pending = payload.pending;
   state.pending = pending;
+  updateAttentionCue(Boolean(pending));
   const empty = $("#pendingEmpty");
   const body = $("#pendingBody");
   const stage = $("#pendingStage");
@@ -310,6 +332,137 @@ async function refreshBalance(force = false) {
   }
 }
 
+function renderTailscale(payload) {
+  const node = payload.node || {};
+  const serve = payload.serve || {};
+  const status = $("#tailscaleStatus");
+
+  $("#tsHostname").textContent = node.hostname || "--";
+  $("#tsTailnet").textContent = node.tailnet || "--";
+  $("#tsServed").textContent = (serve.served_ports || []).join(", ") || "none";
+  $("#tsFunneled").textContent = (serve.funneled_ports || []).join(", ") || "none";
+
+  const detail = $("#tailscaleDetail");
+  if (!node.available) {
+    status.textContent = "unavailable";
+    status.dataset.kind = "error";
+    detail.textContent = node.detail || "tailscale CLI not reachable";
+  } else if (!node.online) {
+    status.textContent = "offline";
+    status.dataset.kind = "error";
+    detail.textContent = "Logged out or disconnected — Funnel/Serve are down.";
+  } else {
+    status.textContent = "online";
+    status.dataset.kind = "ok";
+    detail.textContent = serve.available ? "" : serve.detail || "";
+  }
+
+  $("#funnelWarning").classList.toggle("hidden", !serve.dashboard_funneled);
+}
+
+function renderRunpod(payload) {
+  const status = $("#runpodStatus");
+  const list = $("#runpodList");
+  const detail = $("#runpodDetail");
+  list.innerHTML = "";
+
+  if (!payload.configured) {
+    status.textContent = "setup";
+    status.dataset.kind = "muted";
+    detail.textContent = "Set RUNPOD_API_KEY in .env to see pods.";
+    return;
+  }
+  if (!payload.ok) {
+    status.textContent = "error";
+    status.dataset.kind = "error";
+    detail.textContent = payload.detail || "RunPod API error";
+    return;
+  }
+
+  const pods = payload.pods || [];
+  if (!pods.length) {
+    status.textContent = "no pods";
+    status.dataset.kind = "ok";
+    detail.textContent = "No pods exist — nothing is billing.";
+    return;
+  }
+
+  const running = pods.filter((p) => p.status === "RUNNING").length;
+  status.textContent = running ? `${running} running` : "all stopped";
+  status.dataset.kind = running ? "error" : "ok";
+  pods.forEach((pod) => {
+    const row = document.createElement("div");
+    row.className = "service-row";
+    const dot = pod.status === "RUNNING" ? "error" : "ok";
+    const cost = pod.cost_per_hr ? ` · ${usdFormatter.format(pod.cost_per_hr)}/hr` : "";
+    row.innerHTML = `
+      <span class="dot" data-status="${dot}"></span>
+      <div>
+        <strong>${escapeHtml(pod.name || pod.id || "")}</strong>
+        <small>${escapeHtml(pod.status || "")} · ${escapeHtml(pod.gpu_type || "")}${cost}</small>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  detail.textContent = payload.running_cost_per_hr
+    ? `Billing ${usdFormatter.format(payload.running_cost_per_hr)}/hr while running.`
+    : "Stopped pods may still bill for disk.";
+}
+
+function renderCosines(payload) {
+  const svg = $("#cosineChart");
+  const summary = $("#cosineSummary");
+  const detail = $("#cosineDetail");
+  const points = payload.points || [];
+  const threshold = Number(payload.threshold || 0);
+
+  if (!points.length) {
+    svg.innerHTML = "";
+    summary.textContent = "no data";
+    summary.dataset.kind = "muted";
+    detail.textContent = "No identity-gate scores recorded yet.";
+    return;
+  }
+
+  const width = 280;
+  const height = 88;
+  const pad = 6;
+  const x = (i) =>
+    points.length === 1
+      ? width / 2
+      : pad + (i * (width - pad * 2)) / (points.length - 1);
+  const y = (v) => height - pad - Math.min(Math.max(v, 0), 1) * (height - pad * 2);
+
+  const passes = points.filter((p) => p.cosine >= threshold).length;
+  const thresholdY = y(threshold);
+  let markup = `<line x1="0" x2="${width}" y1="${thresholdY}" y2="${thresholdY}" class="cosine-threshold"></line>`;
+  if (points.length > 1) {
+    const path = points.map((p, i) => `${x(i)},${y(p.cosine)}`).join(" ");
+    markup += `<polyline points="${path}" class="cosine-line"></polyline>`;
+  }
+  points.forEach((p, i) => {
+    const cls = p.cosine >= threshold ? "cosine-dot pass" : "cosine-dot fail";
+    markup += `<circle cx="${x(i)}" cy="${y(p.cosine)}" r="3" class="${cls}"><title>${escapeHtml(p.id)} ${p.cosine.toFixed(4)} (${escapeHtml(p.date)})</title></circle>`;
+  });
+  svg.innerHTML = markup;
+
+  summary.textContent = `${passes}/${points.length} ≥ ${threshold}`;
+  summary.dataset.kind = passes ? "ok" : "error";
+  const latest = points[points.length - 1];
+  detail.textContent = `Latest: ${latest.id} at ${latest.cosine.toFixed(4)} — threshold ${threshold} (identity.cosine_min).`;
+}
+
+async function refreshInfra() {
+  const results = await Promise.allSettled([
+    requestJson("/api/tailscale"),
+    requestJson("/api/runpod/pods"),
+    requestJson("/api/cosines"),
+  ]);
+  if (results[0].status === "fulfilled") renderTailscale(results[0].value);
+  if (results[1].status === "fulfilled") renderRunpod(results[1].value);
+  if (results[2].status === "fulfilled") renderCosines(results[2].value);
+}
+
 function showMessage(text, tone = "neutral") {
   const el = $("#actionMessage");
   el.textContent = text;
@@ -422,5 +575,7 @@ $("#statusRows").addEventListener("click", (event) => {
 
 refreshAll().catch((err) => showMessage(String(err.message || err), "error"));
 refreshBalance();
+refreshInfra();
 setInterval(() => refreshAll().catch((err) => showMessage(String(err.message || err), "error")), 8000);
 setInterval(() => refreshBalance(), 60000);
+setInterval(() => refreshInfra(), 60000);

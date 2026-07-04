@@ -73,7 +73,44 @@ cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188
 # DINOv2 identity gate (terminal 2) — first start downloads the model, then offline
 cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/face_gate.py
 # health check: curl http://localhost:8189/health
+
+# Web dashboard (terminal 3, optional) — mission-control UI on 127.0.0.1:8190
+./venv/bin/python scripts/dashboard.py --config config.yaml
+# health check: curl http://localhost:8190/api/health
 ```
+
+### 5b. Web dashboard (optional but recommended)
+
+A single-page dark UI with full Telegram parity — submit links, approve/
+reject both gates with images inline, toggle providers (local ComfyUI ↔
+WaveSpeed), plus queue status, service health, log tails, WaveSpeed balance,
+Tailscale status, RunPod pods, and an identity-gate cosine history chart.
+Design doc: `docs/WEB-UI-PLAN.md`.
+
+```bash
+# Run as a launchd service instead of a terminal (mirrors the gate service):
+cp ops/launchd/com.jramirez.avatar.dashboard.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jramirez.avatar.dashboard.plist
+# logs: ~/Library/Logs/avatar-dashboard.log
+
+# Reach it from your phone/laptop anywhere via your PRIVATE tailnet:
+tailscale serve --bg 8190
+# NEVER use `tailscale funnel` for this port — the dashboard must stay
+# tailnet-only. The UI shows a red warning if 8190 ever appears funneled.
+```
+
+Environment knobs (all optional, via `.env` or exported):
+- `DASHBOARD_PORT` — override the port (default 8190, also settable in
+  `config.yaml`'s `dashboard.port`).
+- `RUNPOD_API_KEY` — enables the RunPod pods panel (shows pod status +
+  $/hr so a forgotten GPU rental is visible); panel degrades to a
+  "not configured" note without it.
+
+Security posture: binds 127.0.0.1 only; mutating requests (POST/PUT/DELETE)
+are rejected unless the Host header is localhost or a `*.ts.net` name; media
+routes only serve files under `work_dir`/`out_dir` with an extension
+allowlist; there is deliberately no endpoint that bypasses the two human
+approval gates.
 
 ## 6. n8n + workflow import
 

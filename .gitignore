@@ -9,6 +9,7 @@ out/
 # pipeline state
 processed.json
 done.csv
+done.csv.bak
 
 # live config (machine-specific; config.example.yaml is the tracked template)
 config.yaml
@@ -46,6 +47,7 @@ repomix-output.xml
 repomix.config.json
 .antigravityrules.md
 CLAUDE.md
+.claude/launch.json
 
 # os
 .DS_Store

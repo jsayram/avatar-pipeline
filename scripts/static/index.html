@@ -19,6 +19,12 @@
         </div>
       </header>
 
+      <div id="funnelWarning" class="funnel-warning hidden">
+        ⚠ Port 8190 is exposed to the public internet via Tailscale Funnel.
+        This dashboard must stay tailnet-only — run
+        <code>tailscale funnel --bg 8190 off</code> now.
+      </div>
+
       <main class="layout">
         <div class="left-stack">
           <section class="panel pending-panel">
@@ -148,6 +154,44 @@
               <h2>Services</h2>
             </div>
             <div id="servicesList" class="services-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Tailscale</h2>
+              <span id="tailscaleStatus" class="pill small" data-kind="muted">checking</span>
+            </div>
+            <div class="infra-body">
+              <dl class="meta-grid flat">
+                <div><dt>Host</dt><dd id="tsHostname">--</dd></div>
+                <div><dt>Tailnet</dt><dd id="tsTailnet">--</dd></div>
+                <div><dt>Served</dt><dd id="tsServed">--</dd></div>
+                <div><dt>Funneled</dt><dd id="tsFunneled">--</dd></div>
+              </dl>
+              <p id="tailscaleDetail" class="infra-detail"></p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>RunPod</h2>
+              <span id="runpodStatus" class="pill small" data-kind="muted">checking</span>
+            </div>
+            <div class="infra-body">
+              <div id="runpodList" class="services-list flat"></div>
+              <p id="runpodDetail" class="infra-detail"></p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Identity Gate</h2>
+              <span id="cosineSummary" class="pill small" data-kind="muted">--</span>
+            </div>
+            <div class="cosine-body">
+              <svg id="cosineChart" viewBox="0 0 280 88" preserveAspectRatio="none" role="img" aria-label="Identity gate cosine history"></svg>
+              <p id="cosineDetail" class="infra-detail"></p>
+            </div>
           </section>
 
           <section class="panel logs-panel">

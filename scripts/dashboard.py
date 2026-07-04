@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import sys
 import time
@@ -43,7 +44,9 @@ from lib.pending import PendingApprovalError, find_pending_id, load_pending  # n
 from lib.processing_lock import LockHeldError  # noqa: E402
 from lib.processing_lock import release as release_processing_lock  # noqa: E402
 from lib.processing_lock import try_acquire as try_acquire_processing_lock  # noqa: E402
+from lib.runpod_pods import RunPodError, get_pods  # noqa: E402
 from lib.service_health import gather_service_health  # noqa: E402
+from lib.tailscale_status import get_full_status  # noqa: E402
 from lib.state import extract_tiktok_id, load_state, seen_ids, unflag  # noqa: E402
 from lib.status_sheet import build_status_rows  # noqa: E402
 from lib.telegram_links_archive import append_link, update_processing_note  # noqa: E402
@@ -58,6 +61,24 @@ MEDIA_EXTENSIONS = {
 }
 STATUS_CACHE_SECONDS = 5
 WAVESPEED_BALANCE_CACHE_SECONDS = 60
+TAILSCALE_CACHE_SECONDS = 60
+RUNPOD_CACHE_SECONDS = 60
+
+# Host-header guard (cheap CSRF/DNS-rebinding protection): mutating requests
+# must come from the machine itself or a tailnet hostname. A browser-based
+# cross-site request carries the attacker's domain in Host, which matches
+# neither. GET stays unguarded — read-only.
+GUARDED_METHODS = {"POST", "PUT", "DELETE"}
+ALLOWED_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def _host_allowed(host_header: str) -> bool:
+    raw = (host_header or "").strip().lower()
+    if raw.startswith("["):  # IPv6 form, e.g. [::1]:8190
+        host = raw.partition("]")[0].lstrip("[")
+    else:
+        host = raw.partition(":")[0]
+    return host in ALLOWED_LOCAL_HOSTS or host.endswith(".ts.net")
 YES_DECISIONS = {"yes", "approve", "approved"}
 NO_DECISIONS = {"no", "reject", "rejected", "regenerate"}
 
@@ -149,11 +170,27 @@ def create_app(config_path: str | Path = "config.yaml") -> FastAPI:
     static_dir = Path(__file__).resolve().parent / "static"
     status_cache: dict[str, object] = {"expires": 0.0, "rows": []}
     balance_cache: dict[str, object] = {"expires": 0.0, "payload": None}
+    tailscale_cache: dict[str, object] = {"expires": 0.0, "payload": None}
+    runpod_cache: dict[str, object] = {"expires": 0.0, "payload": None}
     job_manager = JobManager()
     dashboard_logger = get_logger("dashboard")
 
     app = FastAPI(title="avatar-pipeline dashboard", version="0.1.0")
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.middleware("http")
+    async def host_guard(request, call_next):
+        if request.method in GUARDED_METHODS and not _host_allowed(
+            request.headers.get("host", "")
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "mutating requests must come from localhost or "
+                    "a tailnet (*.ts.net) hostname"
+                },
+            )
+        return await call_next(request)
 
     def cfg():
         try:
@@ -228,6 +265,50 @@ def create_app(config_path: str | Path = "config.yaml") -> FastAPI:
 
         balance_cache["payload"] = payload
         balance_cache["expires"] = now + WAVESPEED_BALANCE_CACHE_SECONDS
+        return payload
+
+    def tailscale_payload(*, force: bool = False):
+        now = time.monotonic()
+        cached_payload = tailscale_cache.get("payload")
+        if not force and cached_payload is not None and now < float(tailscale_cache["expires"]):
+            return cached_payload
+        payload = get_full_status()
+        payload["checked_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        tailscale_cache["payload"] = payload
+        tailscale_cache["expires"] = now + TAILSCALE_CACHE_SECONDS
+        return payload
+
+    def runpod_payload(*, force: bool = False):
+        now = time.monotonic()
+        cached_payload = runpod_cache.get("payload")
+        if not force and cached_payload is not None and now < float(runpod_cache["expires"]):
+            return cached_payload
+        payload = {
+            "ok": False,
+            "configured": False,
+            "pods": [],
+            "running_cost_per_hr": 0.0,
+            "detail": "",
+            "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
+        try:
+            result = get_pods()
+            payload["configured"] = bool(result.get("configured"))
+            if payload["configured"]:
+                payload["pods"] = result.get("pods", [])
+                payload["running_cost_per_hr"] = sum(
+                    float(p.get("cost_per_hr") or 0.0)
+                    for p in payload["pods"]
+                    if p.get("status") == "RUNNING"
+                )
+                payload["ok"] = True
+            else:
+                payload["detail"] = str(result.get("detail", "not configured"))
+        except RunPodError as exc:
+            payload["configured"] = True
+            payload["detail"] = str(exc)
+        runpod_cache["payload"] = payload
+        runpod_cache["expires"] = now + RUNPOD_CACHE_SECONDS
         return payload
 
     def job_response(record):
@@ -415,6 +496,39 @@ def create_app(config_path: str | Path = "config.yaml") -> FastAPI:
     @app.get("/api/wavespeed/balance")
     def get_wavespeed_balance(force: bool = Query(default=False)):
         return wavespeed_balance_payload(force=force)
+
+    @app.get("/api/cosines")
+    def get_cosines():
+        current_cfg = cfg()
+        points = []
+        done_csv = current_cfg.paths.done_csv
+        if done_csv.exists():
+            with done_csv.open(newline="", encoding="utf-8") as fh:
+                for row in csv.DictReader(fh):
+                    raw = (row.get("identity_cosine") or "").strip()
+                    if not raw:
+                        continue
+                    try:
+                        cosine = float(raw)
+                    except ValueError:
+                        continue
+                    points.append(
+                        {
+                            "date": row.get("date", ""),
+                            "id": row.get("id", ""),
+                            "cosine": cosine,
+                            "status": row.get("status", ""),
+                        }
+                    )
+        return {"threshold": current_cfg.identity.cosine_min, "points": points}
+
+    @app.get("/api/tailscale")
+    def get_tailscale(force: bool = Query(default=False)):
+        return tailscale_payload(force=force)
+
+    @app.get("/api/runpod/pods")
+    def get_runpod_pods(force: bool = Query(default=False)):
+        return runpod_payload(force=force)
 
     @app.put("/api/config/providers")
     def put_providers(request: ProvidersRequest):

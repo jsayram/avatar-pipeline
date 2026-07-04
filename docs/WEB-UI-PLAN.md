@@ -1,10 +1,11 @@
 # Web UI Dashboard — Implementation Plan
 
-> **Status: Phase 1, Phase 2, and Phase 3 implemented (2026-07-03).** This
-> document is the agreed design for a local web dashboard. Implementation
-> happens in phases (see [Milestones](#milestones)) — each phase is
-> independently useful, so the plan can be executed across multiple sessions.
-> Next implementation target: Phase 4 integrations.
+> **Status: ALL PHASES (1–5) IMPLEMENTED (2026-07-04).** This document is
+> the agreed design for the local web dashboard, kept as the reference for
+> how it works and why. Remaining operator steps (not code): install the
+> launchd plist and run `tailscale serve --bg 8190` — see SETUP.md §5b.
+> Known deviation from the plan: the cosine chart reads done.csv via a
+> dedicated `GET /api/cosines` endpoint rather than extending /api/status.
 
 ## Why this exists
 
