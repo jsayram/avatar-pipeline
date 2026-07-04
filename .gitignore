@@ -45,6 +45,7 @@ venv/
 repomix-output.xml
 repomix.config.json
 .antigravityrules.md
+CLAUDE.md
 
 # os
 .DS_Store
