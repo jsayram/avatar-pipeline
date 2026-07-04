@@ -4,7 +4,7 @@
 > You add TikTok links to a **.numbers sheet on iCloud**; the system makes a video of **your
 > synthetic avatar performing the reference video's motion** (full face+body identity), strips
 > metadata, and drops it in a folder for you to review. Builds on
-> `automated-avatar-pipeline-n8n.md`, `nsfw-optimization.md`, `consider-upgrade-models.md`.
+> `automated-avatar-pipeline-n8n.md`, `mature-optimization.md`, `consider-upgrade-models.md`.
 
 ---
 
@@ -43,7 +43,7 @@ Manual effort = **add links + review output.** Everything between is automated b
    and rejects/retries anything that drifts below threshold. So "100%" = "nothing below your bar ships."
 4. **Legal:** using **your own public TikToks** as motion reference is fine; the avatar is
    synthetic; output is fully regenerated (no TikTok watermark survives). Adult-content lines from
-   `nsfw-optimization.md` §0 still apply if relevant.
+   `mature-optimization.md` §0 still apply if relevant.
 
 ---
 

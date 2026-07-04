@@ -10,7 +10,7 @@ copies and delete any you dislike before uploading — 25–40 images is fine.
 (`video.base_model` in config.yaml). Train the LoRA on the same base you
 generate with. Plain image-based Kohya training only — **never InsightFace-
 based identity adapters** (they poison the commercial license,
-docs/nsfw-optimization.md §3). Check RealVis's model-card terms before
+docs/mature-optimization.md §3). Check RealVis's model-card terms before
 monetizing output.
 
 Folder-name convention (already applied): `10_avatargirl woman` =

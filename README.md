@@ -17,7 +17,7 @@ and drops it in an output folder for review.
 | [docs/SETUP.md](docs/SETUP.md) | **Install + gap checklist** — what's installed, what's missing, prerequisites, status checklist |
 | [docs/avatar-video-from-tiktok-pipeline.md](docs/avatar-video-from-tiktok-pipeline.md) | The TikTok → avatar-video pipeline (daily cron, .numbers input) |
 | [docs/automated-avatar-pipeline-n8n.md](docs/automated-avatar-pipeline-n8n.md) | Core build guide — n8n + ComfyUI + face-lock gate |
-| [docs/nsfw-optimization.md](docs/nsfw-optimization.md) | Adult-content quality + commercial-license notes |
+| [docs/mature-optimization.md](docs/mature-optimization.md) | Adult-content quality + commercial-license notes |
 
 > General model/licensing reference (not avatar-specific) lives outside this repo at
 > `~/llms/consider-upgrade-models.md`.

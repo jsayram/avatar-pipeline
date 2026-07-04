@@ -3,7 +3,7 @@
 > **Audience:** an AI build agent (e.g. Claude Code) that will implement this system end-to-end.
 > **Authoritative source.** Where this conflicts with other docs, this wins. Supporting detail:
 > `automated-avatar-pipeline-n8n.md`, `avatar-video-from-tiktok-pipeline.md`,
-> `nsfw-optimization.md`, `accii-diagram-avatar-pipe.md`, `SETUP.md`.
+> `mature-optimization.md`, `accii-diagram-avatar-pipe.md`, `SETUP.md`.
 > Keywords MUST / SHOULD / MUST NOT are normative (RFC-2119 sense).
 
 ---
