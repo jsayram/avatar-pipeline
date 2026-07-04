@@ -1,0 +1,112 @@
+# avatar-pipeline configuration
+# Copy to config.yaml and edit. All paths, thresholds, endpoints, provider
+# choices, retries, schedule and clip length live here — nothing is hardcoded.
+# Relative paths are resolved against the directory containing this file.
+
+paths:
+  numbers_sheet: "/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/into-pipe/links.numbers"
+  work_dir: "./work"
+  out_dir: "/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/out-pipe"
+  processed_json: "./processed.json"
+  done_csv: "./done.csv"
+  lora_path: "/Users/jramirez/llms/image-models/comfyui/loras/avatar_v1.safetensors"
+  avatar_reference: "./assets/avatar_reference.png"   # canonical identity image for the gate
+  workflows_dir: "./comfyui"                          # exported ComfyUI API workflow JSONs
+  # status_sheet: read-glance companion CSV, fully regenerated after every
+  # state change (never edits numbers_sheet itself — that stays read-only
+  # per PRODUCT-SPEC.md §5 #6). Optional; defaults to "links_status.csv"
+  # next to numbers_sheet if omitted.
+  # status_sheet: "./links_status.csv"
+  # image_out_dir: approved avatar stills (the one sent to animate), named
+  # <id>-image-<timestamp>.png. Optional; defaults to out_dir/image-out.
+  # image_out_dir: "./out/image-out"
+  # video_out_dir: animation outputs, named <id>-video-<timestamp>.mp4 —
+  # flat directory, whether the attempt PASSED the identity gate (published)
+  # or FAILED it (kept anyway, never deleted). Optional; defaults to
+  # out_dir/video-out.
+  # video_out_dir: "./out/video-out"
+  # telegram_links_archive: append-only "keep" log of every TikTok link
+  # texted in via Telegram — NOT read by pick_next.py, purely a record.
+  # Optional; defaults to "linksThroughTelegram.numbers" next to
+  # numbers_sheet if omitted.
+  # telegram_links_archive: "./linksThroughTelegram.numbers"
+
+endpoints:
+  comfyui_url: "http://localhost:8188"
+  gate_url: "http://localhost:8189"
+  n8n_url: "http://localhost:5678"
+
+identity:
+  cosine_min: 0.88     # DINOv2 threshold; tune 0.82 loose … 0.92 strict
+  sample_fps: 1        # frames/second sampled from the animated video for the gate
+  max_retries: 2       # FR-5 re-renders (new seed) after a gate FAIL before flagging
+
+video:
+  base_model: "RealVisXL_V5.0_fp16.safetensors"   # FR-4 inpaint base; must match the LoRA's training base
+                                                   # (checkpoint filename ComfyUI's CheckpointLoaderSimple sees)
+  wan_model: "wan2.2-animate"
+  max_clip_seconds: 10          # reference video is capped to this before animating —
+                                # 10s matches Kling Motion Control's cap for
+                                # character_orientation: "image" if you enable wavespeed below
+  seed: null                    # null = random per attempt; set an int for reproducibility
+  # cookies_file: yt-dlp --cookies <file> — needed for TikTok posts gated behind
+  # "this post may not be comfortable for some audiences, log in for access."
+  # A Netscape-format cookies.txt exported from a logged-in browser session.
+  # See docs/TIKTOK-COOKIES.md. Optional; omit entirely if you don't need it.
+  # cookies_file: "./tiktok_cookies.txt"
+
+avatar_frame:
+  provider: "local_comfyui"     # local_comfyui | wavespeed_seedream  (FR-4 still image)
+  wavespeed_model: "bytedance/seedream-v4.5/edit"  # paid still-image provider if enabled
+  size: ""                      # optional Seedream output size, e.g. "1440x2560"
+  identity_references: []       # optional extra identity-only refs; first Seedream image is always the source frame
+  prompt: ""                    # blank = built-in two-image replacement prompt; set explicitly to override
+
+animation:
+  provider: "local_comfyui"     # local_comfyui | wavespeed  (FR-5 only) — stays local by default
+  fallback_to_local_on_cloud_error: true
+
+wavespeed:
+  enabled: false                 # WaveSpeed is NEVER called unless this is true
+  api_base: "https://api.wavespeed.ai"
+  api_key_env: "WAVESPEED_API_KEY"
+  model: "kwaivgi/kling-v3.0-pro/motion-control"   # verified 2026-07-03 against
+                                # https://wavespeed.ai/models/kwaivgi/kling-v3.0-pro/motion-control
+                                # re-check the model card before enabling — catalogs change
+  character_orientation: "image"   # "image" = 10s ref-video cap (matches max_clip_seconds
+                                    # above) | "video" = 30s cap, frames orient to the video instead
+  keep_original_sound: true
+  prompt: ""                    # optional style/motion guidance text
+  negative_prompt: ""           # optional
+  poll_interval_seconds: 10
+  timeout_seconds: 1800
+
+comfyui:
+  poll_interval_seconds: 2
+  image_timeout_seconds: 900    # FR-4 avatar-into-frame (~0.5–2 min on M1 Max)
+  video_timeout_seconds: 21600  # FR-5 Wan render (minutes per ~5 s → hours for 12 s)
+
+schedule:
+  cron: "0 2 * * *"             # daily 02:00 (mirrored in n8n/workflow.json)
+
+notifications:
+  enabled: true
+  provider: "macos"             # macos | email | none (email is wired in n8n, see SETUP.md)
+
+telegram:
+  enabled: false                # opt-in, like wavespeed above. Required for
+                                 # `worker.py --phase prepare/animate/regenerate`
+                                 # (the operator-approval loop) — see SETUP.md.
+                                 # With this off, only `--phase full` (legacy,
+                                 # no approval gate, manual/testing use only) works.
+  bot_token_env: "TELEGRAM_BOT_TOKEN"   # set via .env, never here — see .env.example
+  chat_id: ""                   # fill in after messaging your bot once
+  max_approval_attempts: 3      # regenerations before giving up and flagging the URL
+
+dashboard:
+  port: 8190                    # local-only UI: http://127.0.0.1:8190
+  log_tail_lines: 200
+  launchd_labels:
+    n8n: "com.jramirez.avatar.n8n"
+    gate: "com.jramirez.avatar.gate"
+    dashboard: "com.jramirez.avatar.dashboard"

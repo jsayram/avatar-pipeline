@@ -1,0 +1,247 @@
+{
+  "id": "AvatarPipeDaily1",
+  "name": "avatar-pipeline daily",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Daily 12:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-460, 0]
+    },
+    {
+      "parameters": {
+        "command": "cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/pick_next.py --config config.yaml || true"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Pick next link",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-240, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// pick_next.py prints exactly one JSON line on stdout; logs go to stderr.\nconst raw = ($json.stdout || '').trim();\nlet parsed = { status: 'error', error: 'pick_next produced no stdout', stderr: ($json.stderr || '').slice(-1500) };\nconst jsonLines = raw.split('\\n').filter((l) => l.trim().startsWith('{'));\nif (jsonLines.length) {\n  try {\n    parsed = JSON.parse(jsonLines[jsonLines.length - 1]);\n  } catch (e) {\n    parsed = { status: 'error', error: 'unparseable pick_next output', raw, stderr: ($json.stderr || '').slice(-1500) };\n  }\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Parse pick result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-20, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-link-available",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Link available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [200, 0]
+    },
+    {
+      "parameters": {
+        "command": "=cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/worker.py --phase prepare --id \"{{ $json.id }}\" --url \"{{ $json.url }}\" --config config.yaml || true"
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Run worker (prepare)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [440, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// worker.py prints exactly one JSON line on stdout; logs go to stderr\n// and work/<id>/run.log. `--phase prepare` only ever produces\n// pending_approval / already_processed / flagged / error here — it never\n// publishes. This is GATE 1 of a TWO-GATE approval flow (see worker.py's\n// module docstring): pending_approval here means the RAW extracted frame\n// was sent to Telegram (stage=\"frame\", no Seedream cost spent yet). A\n// \"yes\" reply triggers --phase generate_avatar (FR-4 + GATE 2), a \"no\"\n// triggers --phase reject_frame — both handled by the separate\n// Telegram-reply workflow (AvatarPipeTelegramReply1), which also handles\n// TikTok links texted in directly (same --phase prepare entry point, via\n// handle_telegram_reply.py). The `|| true` in the command keeps n8n from\n// aborting — status carries truth.\nconst raw = ($json.stdout || '').trim();\nlet parsed = { status: 'error', error: 'worker produced no stdout', stderr: ($json.stderr || '').slice(-1500) };\nconst jsonLines = raw.split('\\n').filter((l) => l.trim().startsWith('{'));\nif (jsonLines.length) {\n  try {\n    parsed = JSON.parse(jsonLines[jsonLines.length - 1]);\n  } catch (e) {\n    parsed = { status: 'error', error: 'unparseable worker output', raw, stderr: ($json.stderr || '').slice(-1500) };\n  }\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Parse worker result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-pending",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "pending_approval",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "Sent for approval?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Awaiting Telegram reply",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, -180]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "No links today",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [440, 120]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-00000000000a",
+      "name": "Not sent for approval (see done.csv + run.log)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 0]
+    }
+  ],
+  "connections": {
+    "Daily 12:00": {
+      "main": [
+        [
+          {
+            "node": "Pick next link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick next link": {
+      "main": [
+        [
+          {
+            "node": "Parse pick result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse pick result": {
+      "main": [
+        [
+          {
+            "node": "Link available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link available?": {
+      "main": [
+        [
+          {
+            "node": "Run worker (prepare)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No links today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run worker (prepare)": {
+      "main": [
+        [
+          {
+            "node": "Parse worker result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse worker result": {
+      "main": [
+        [
+          {
+            "node": "Sent for approval?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sent for approval?": {
+      "main": [
+        [
+          {
+            "node": "Awaiting Telegram reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not sent for approval (see done.csv + run.log)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 43200
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

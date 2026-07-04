@@ -1,0 +1,50 @@
+# scratch + outputs (large media)
+work/
+out/
+*.mp4
+*.mov
+*.png
+*.jpg
+
+# pipeline state
+processed.json
+done.csv
+
+# live config (machine-specific; config.example.yaml is the tracked template)
+config.yaml
+config.overrides.yaml
+
+# secrets (never commit — .env.example is the tracked template)
+.env
+
+# TikTok session cookies (real login session — treat like a password)
+tiktok_cookies.txt
+
+# Claude Code local settings (machine-specific paths/permissions, not shared config)
+.claude/settings.local.json
+
+# training dataset (real face photos + archive of the avatar identity — not code, don't push to GitHub)
+training/dataset/
+training/*.zip
+
+# models / weights (keep in ~/llms, never commit)
+*.safetensors
+*.ckpt
+*.bin
+*.pt
+*.pth
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# agent tooling (multi-agent workspace files — never commit)
+repomix-output.xml
+repomix.config.json
+.antigravityrules.md
+
+# os
+.DS_Store

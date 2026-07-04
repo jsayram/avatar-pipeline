@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jramirez.avatar.dashboard</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/jramirez/Git/avatar-pipeline/venv/bin/python</string>
+    <string>/Users/jramirez/Git/avatar-pipeline/scripts/dashboard.py</string>
+    <string>--config</string>
+    <string>/Users/jramirez/Git/avatar-pipeline/config.yaml</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/jramirez/Git/avatar-pipeline</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/jramirez/Library/Logs/avatar-dashboard.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/jramirez/Library/Logs/avatar-dashboard.log</string>
+</dict>
+</plist>

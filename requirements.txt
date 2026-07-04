@@ -1,0 +1,19 @@
+# Core pipeline (pick_next.py, worker.py, lib/)
+pyyaml>=6.0
+requests>=2.31
+numbers-parser>=4.4
+python-dotenv>=1.0   # loads .env (e.g. WAVESPEED_API_KEY) — never commit .env itself
+
+# Identity gate service (scripts/face_gate.py) — the heavy deps live here.
+# torch/transformers are ONLY imported by face_gate.py; the worker and
+# pick_next never load them.
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.0
+pillow>=10.0
+torch>=2.2
+torchvision>=0.17   # transformers' AutoImageProcessor requires it for DINOv2
+transformers>=4.40
+
+# Tests
+pytest>=8.0

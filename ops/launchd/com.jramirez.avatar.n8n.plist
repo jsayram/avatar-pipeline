@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>N8N_SECURE_COOKIE</key>
+		<string>false</string>
+		<key>NODES_EXCLUDE</key>
+		<string>["n8n-nodes-base.localFileTrigger"]</string>
+		<!-- WEBHOOK_URL: the PUBLIC base URL n8n uses when it registers webhooks
+		     (e.g. the Telegram Trigger's setWebhook call). Must equal the
+		     Tailscale Funnel hostname, WITH a trailing slash. n8n keeps
+		     listening on localhost:5678; Funnel proxies public 443 -> 5678.
+		     Replace the placeholder below with your real ts.net host (get it
+		     from `tailscale funnel status` after enabling Funnel) and redeploy
+		     this plist. See docs/TAILSCALE-SETUP.md. -->
+		<key>WEBHOOK_URL</key>
+		<string>https://your-machine.your-tailnet.ts.net/</string>
+		<key>PATH</key>
+		<string>/Users/jramirez/.nvm/versions/node/v22.23.1/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>KeepAlive</key>
+	<true/>
+	<key>Label</key>
+	<string>com.jramirez.avatar.n8n</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/jramirez/.nvm/versions/node/v22.23.1/bin/node</string>
+		<string>/Users/jramirez/.nvm/versions/node/v22.23.1/bin/n8n</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/jramirez/Library/Logs/avatar-n8n.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/jramirez/Library/Logs/avatar-n8n.log</string>
+	<key>WorkingDirectory</key>
+	<string>/Users/jramirez</string>
+</dict>
+</plist>

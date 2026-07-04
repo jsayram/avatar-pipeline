@@ -1,0 +1,77 @@
+{
+  "id": "AvatarPipeTelegramReply1",
+  "name": "avatar-pipeline telegram reply",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"]
+      },
+      "id": "b1000000-0000-4000-8000-000000000001",
+      "name": "Telegram reply received",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [-460, 0],
+      "webhookId": "57b575c3-7c1a-40dd-ad80-3b2d279c2eb8",
+      "credentials": {
+        "telegramApi": {
+          "id": "3yp1uuuWAPYPjnFh",
+          "name": "avatar-pipeline Telegram bot"
+        }
+      },
+      "notes": "Telegram API credential created in n8n's UI (Overview > Credentials tab > Telegram API, paste your bot token there — not under the Settings gear menu) — n8n stores it encrypted, separate from this file.\n\nIMPORTANT: this is a WEBHOOK trigger — Telegram must be able to reach this n8n instance over the public internet for messages to arrive at all. Solved via Tailscale Funnel — see docs/TAILSCALE-SETUP.md. n8n's WEBHOOK_URL env var (in ops/launchd/com.jramirez.avatar.n8n.plist) must match the Funnel hostname for the webhook registration to use the right public URL."
+    },
+    {
+      "parameters": {
+        "command": "=cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/handle_telegram_reply.py --text \"{{ $json.message.text }}\" --config config.yaml || true"
+      },
+      "id": "b1000000-0000-4000-8000-000000000002",
+      "name": "Handle reply",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-240, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// handle_telegram_reply.py prints exactly one JSON line on stdout.\n// status: 'ignored' (not yes/no, or nothing pending — not an error),\n// 'pending_approval' (regenerated, resent to Telegram), 'published'\n// (animated + gated + published), 'flagged' (gave up or a stage failed),\n// 'error' (infra problem — URL not consumed, will still be actionable\n// next time). The `|| true` in the command keeps n8n from aborting.\nconst raw = ($json.stdout || '').trim();\nlet parsed = { status: 'error', error: 'handler produced no stdout', stderr: ($json.stderr || '').slice(-1500) };\nconst jsonLines = raw.split('\\n').filter((l) => l.trim().startsWith('{'));\nif (jsonLines.length) {\n  try {\n    parsed = JSON.parse(jsonLines[jsonLines.length - 1]);\n  } catch (e) {\n    parsed = { status: 'error', error: 'unparseable handler output', raw, stderr: ($json.stderr || '').slice(-1500) };\n  }\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "b1000000-0000-4000-8000-000000000003",
+      "name": "Parse reply result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-20, 0]
+    }
+  ],
+  "connections": {
+    "Telegram reply received": {
+      "main": [
+        [
+          {
+            "node": "Handle reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle reply": {
+      "main": [
+        [
+          {
+            "node": "Parse reply result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 21600
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

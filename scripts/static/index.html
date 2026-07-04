@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Avatar Pipeline</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Local Pipeline</p>
+          <h1>Avatar Pipeline</h1>
+        </div>
+        <div class="topbar-actions">
+          <span id="updatedAt" class="muted">--</span>
+          <button id="refreshBtn" class="icon-button" type="button" title="Refresh">↻</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <div class="left-stack">
+          <section class="panel pending-panel">
+            <div class="panel-header">
+              <h2>Pending Approval</h2>
+              <span id="pendingStage" class="pill">None</span>
+            </div>
+            <div id="pendingEmpty" class="empty">No pending approval.</div>
+            <div id="pendingBody" class="pending-body hidden">
+              <div class="preview-grid">
+                <figure>
+                  <div id="framePreview" class="media-frame"></div>
+                  <figcaption>Frame</figcaption>
+                </figure>
+                <figure>
+                  <div id="avatarPreview" class="media-frame"></div>
+                  <figcaption>Avatar Still</figcaption>
+                </figure>
+              </div>
+              <dl class="meta-grid">
+                <div><dt>ID</dt><dd id="pendingId">--</dd></div>
+                <div><dt>Attempt</dt><dd id="pendingAttempt">--</dd></div>
+                <div><dt>Updated</dt><dd id="pendingUpdated">--</dd></div>
+                <div><dt>Note</dt><dd id="pendingNote">--</dd></div>
+              </dl>
+              <div class="button-row">
+                <button id="approveBtn" class="command primary" type="button">Approve</button>
+                <button id="rejectBtn" class="command danger" type="button">Reject</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Submit Link</h2>
+              <button id="runNextBtn" class="command secondary" type="button">Run Next</button>
+            </div>
+            <form id="linkForm" class="link-form">
+              <input id="linkInput" type="url" placeholder="https://www.tiktok.com/..." autocomplete="off">
+              <button class="command primary" type="submit">Send</button>
+            </form>
+            <div id="actionMessage" class="action-message"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Recent Jobs</h2>
+            </div>
+            <div id="jobsList" class="jobs-list"></div>
+          </section>
+        </div>
+
+        <section class="panel status-panel">
+          <div class="panel-header">
+            <h2>Queue</h2>
+            <div id="statusCounts" class="count-row"></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>ID</th>
+                  <th>Note</th>
+                  <th>Processing</th>
+                  <th>Output</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="statusRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>WaveSpeed</h2>
+              <button id="refreshBalanceBtn" class="icon-button small" type="button" title="Refresh balance">↻</button>
+            </div>
+            <div class="balance-body">
+              <div class="balance-row">
+                <div>
+                  <p class="balance-label">Balance</p>
+                  <div id="wavespeedBalanceValue" class="balance-value">--</div>
+                </div>
+                <span id="wavespeedBalanceStatus" class="pill small" data-kind="muted">checking</span>
+              </div>
+              <p id="wavespeedBalanceDetail" class="balance-detail">Checking account balance...</p>
+              <div class="balance-footer">
+                <span id="wavespeedBalanceChecked" class="muted">--</span>
+                <a id="wavespeedDashboardLink" href="https://wavespeed.ai" target="_blank" rel="noreferrer">Open</a>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Providers</h2>
+              <span id="providerOverlayBadge" class="pill small" data-kind="muted">config.yaml</span>
+            </div>
+            <div class="provider-form">
+              <label>
+                <span>Avatar Still</span>
+                <select id="avatarProvider"></select>
+                <small id="avatarProviderBase"></small>
+              </label>
+              <label>
+                <span>Animation</span>
+                <select id="animationProvider"></select>
+                <small id="animationProviderBase"></small>
+              </label>
+              <label class="toggle-row">
+                <input id="wavespeedEnabled" type="checkbox">
+                <span>WaveSpeed Enabled</span>
+                <small id="wavespeedBase"></small>
+              </label>
+              <div class="button-row">
+                <button id="saveProvidersBtn" class="command primary" type="button">Save</button>
+                <button id="revertProvidersBtn" class="command secondary" type="button">Revert</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Services</h2>
+            </div>
+            <div id="servicesList" class="services-list"></div>
+          </section>
+
+          <section class="panel logs-panel">
+            <div class="panel-header">
+              <h2>Logs</h2>
+              <select id="logSelect" title="Log">
+                <option value="dashboard">dashboard</option>
+                <option value="n8n">n8n</option>
+                <option value="comfyui">comfyui</option>
+                <option value="gate">gate</option>
+              </select>
+            </div>
+            <pre id="logOutput" class="log-output"></pre>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

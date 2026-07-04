@@ -1,0 +1,22 @@
+PLACEHOLDER — replace with the real file `avatar_reference.png` in this folder.
+
+What it is
+  The canonical identity image of YOUR synthetic avatar, used by the DINOv2
+  identity gate (FR-6). Every sampled frame of every generated video is
+  compared against this image; anything scoring below identity.cosine_min
+  (config.yaml) is retried and then flagged — never published.
+
+Requirements
+  - A clean, front-facing, well-lit render of the avatar (head + upper body),
+    ideally one of the images the character LoRA was trained on.
+  - PNG, roughly 768–1024 px on the short side.
+  - Same file the LoRA identity derives from — if you retrain the avatar,
+    update this image too.
+
+How to install it
+  1. Save the image as:  assets/avatar_reference.png
+  2. Delete this placeholder file.
+  3. `paths.avatar_reference` in config.yaml already points there.
+
+Until the real file exists, worker.py fails the identity-gate stage with a
+clear setup error (the URL is not consumed).
