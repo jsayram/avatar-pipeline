@@ -51,7 +51,7 @@ curl -s -o /dev/null --max-time 3 "http://localhost:8189/health" \
          "$REPO_DIR/venv/bin/python $REPO_DIR/scripts/face_gate.py"
 curl -s -o /dev/null --max-time 3 "http://localhost:5678/" \
   && ok "n8n (localhost:5678)" \
-  || bad "n8n (localhost:5678)" "nvm exec 22 n8n   (see SETUP.md §6 — needs Node 22, not 26)"
+  || bad "n8n (localhost:5678)" "nvm exec 24 n8n   (see SETUP.md §6 — n8n 2.46.x needs Node >= 24)"
 
 echo
 echo "── files & config (details via worker --dry-run) ──────────"

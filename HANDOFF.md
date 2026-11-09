@@ -1741,3 +1741,8 @@ Services are launchd-managed (see `ops/launchd/`); logs in
   at 1.0x, modest visible improvement) against the real
   `avatar_reference.png` at 360×640 (crop landed at 1.73x, more pronounced
   improvement).
+  - **Superseded 2026-11-09:** n8n is now 2.46.7 under Node 24
+    (`~/.nvm/versions/node/v24.22.2/`, `nvm exec 24 n8n`). The old 2.28.5 under
+    Node 22 is still on disk but unused. The plist binds to 127.0.0.1. The
+    database migrated cleanly (both workflows published); pre-upgrade copy at
+    `~/.n8n-backup-2026-11-09`. See SETUP.md §6.

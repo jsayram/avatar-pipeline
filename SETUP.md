@@ -118,12 +118,23 @@ Run n8n **on the host** (not Docker) so its Execute Command nodes can reach
 this repo's venv, ffmpeg, and the iCloud folder directly:
 
 ```bash
-# n8n's isolated-vm dependency won't compile on the newest Node (v26) —
-# install under Node 22 LTS via nvm:
-nvm install 22
-nvm exec 22 npm install -g n8n
-nvm exec 22 n8n        # opens http://localhost:5678
+# n8n 2.46.x requires Node >= 24 (package.json engines). Pin the version:
+# n8n ships about weekly and 3.0 (Docker-only) is in early access.
+nvm install 24
+nvm exec 24 npm install -g n8n@2.46.7
+nvm exec 24 n8n        # opens http://127.0.0.1:5678
 ```
+
+Upgraded 2026-11-09 from 2.28.5 on Node 22 to 2.46.7 on Node 24 (clears every
+published high/critical advisory; minimum safe is 2.46.1). Data folder backed
+up first to `~/.n8n-backup-2026-11-09`. The launchd plist now binds n8n to
+`127.0.0.1` (`N8N_LISTEN_ADDRESS`); Tailscale Serve/Funnel proxies to loopback,
+so nothing else needs the LAN. n8n 2.x disables the Execute Command node by
+default; the plist's explicit `NODES_EXCLUDE` (Local File Trigger only) keeps
+it enabled on purpose, which is why the editor must never be exposed publicly.
+Before moving to n8n 3.x: it drops npm installs (Docker only), so this
+host-install approach will need a container with the repo, venv and ffmpeg
+mounted in. Check **Settings → Migration Report** first.
 
 Import: **n8n UI → Workflows → ⋯ → Import from File →
 `n8n/workflow.json`** → open it → toggle **Active**. The Schedule node fires
