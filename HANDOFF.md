@@ -92,7 +92,7 @@
 >   testing ran on **:8191** (via `.claude/launch.json`, gitignored). Next
 >   step for whoever owns that process (or the operator):
 >   `kill <pid of scripts/dashboard.py>` and restart, or just install the
->   launchd plist (`ops/launchd/com.jramirez.avatar.dashboard.plist`) and
+>   launchd plist (`ops/launchd/dashboard.plist.example`) and
 >   let it own the service, then `tailscale serve --bg 8190`.
 > - Modified: `scripts/dashboard.py`, `scripts/static/{index.html,app.js,
 >   style.css}`, `scripts/lib/tailscale_status.py`, `tests/test_dashboard.py`
@@ -200,12 +200,12 @@
 > `endpoints.n8n_url`, plus `dashboard.port`, `dashboard.log_tail_lines`, and
 > `dashboard.launchd_labels`. `config.example.yaml` includes the defaults.
 > New launchd template:
-> `ops/launchd/com.jramirez.avatar.dashboard.plist`. The repo still has no
+> `ops/launchd/dashboard.plist.example`. The repo still has no
 > commit/stage; `git status` shows everything untracked because `git init`
 > was run only for the operator to push later.
 >
 > Validation after the WaveSpeed balance panel:
-> `/Users/jramirez/Git/avatar-pipeline/venv/bin/python -m pytest -q`
+> `<project-root>/venv/bin/python -m pytest -q`
 > → **219 passed**. Warnings only: FastAPI/Starlette TestClient deprecation
 > and sandbox-blocked `.pytest_cache` write. Live server was restarted after
 > this change; `GET /api/health` returned `{"status":"ok","port":8190}` and
@@ -242,7 +242,7 @@
 > - The real Tailscale hostname was redacted to `<device>.<tailnet>.ts.net`
 >   placeholders in: `docs/TAILSCALE-SETUP.md`, this file (see the Tailscale
 >   entry below), `system-design-diagram.md`, and the REPO copy of
->   `ops/launchd/com.jramirez.avatar.n8n.plist` (now
+>   `ops/launchd/n8n.plist.example` (now
 >   `https://your-machine.your-tailnet.ts.net/`). **The DEPLOYED plist at
 >   `~/Library/LaunchAgents/` still has the real WEBHOOK_URL** — it's a
 >   separate regular file (not a symlink), so the running n8n is unaffected.
@@ -254,8 +254,8 @@
 >   generic `/fake/` path. All 183 tests still pass.
 > - Verified clean: no keys/tokens/cookies/emails in any tracked file;
 >   `git check-ignore` confirmed on every sensitive path. Remaining known
->   cosmetic exposure (operator accepted): `/Users/jramirez/...` paths and
->   `com.jramirez.avatar.*` launchd labels in docs/plists, and the Telegram
+>   cosmetic exposure (operator accepted): `$HOME/...` paths and
+>   `<label-prefix>.*` launchd labels in docs/plists, and the Telegram
 >   `chat_id` mentioned in this file — none exploitable alone.
 >
 > Previous entry: **2026-07-03 (memory/disk hygiene pass)** — operator asked
@@ -374,7 +374,7 @@
 > changed: if the exact same TikTok link is pasted while it is already
 > pending, the bot resends the saved pending frame/still instead of declining
 > or starting a new run. Validation: `174 passed` via
-> `/Users/jramirez/Git/avatar-pipeline/venv/bin/python -m pytest -q` (only
+> `<project-root>/venv/bin/python -m pytest -q` (only
 > warning: pytest cache write blocked by sandbox).
 > Last updated: **2026-07-03 (latest prompt change) — Seedream 4.5 prompt
 > was deliberately simplified because outputs drifted into a cartoon/stylized
@@ -390,7 +390,7 @@
 > payload is now exactly two images: source frame first (`image 1`) and the
 > first configured identity reference second (`image 2`); extra configured
 > references are not sent unless a custom prompt is used. Validation:
-> `172 passed` via `/Users/jramirez/Git/avatar-pipeline/venv/bin/python -m
+> `172 passed` via `<project-root>/venv/bin/python -m
 > pytest -q` (only warning: pytest cache write blocked by sandbox).
 > Last updated: **2026-07-03 (latest follow-up) — closed the stale-pending
 > reference-video gap and improved Telegram error reporting.** The first
@@ -407,7 +407,7 @@
 > Telegram notice includes the exact provider error text. `run_animate()`
 > also now sends Telegram notices for infrastructure/unexpected animation
 > errors instead of only returning JSON/logging. Validation:
-> `170 passed` via `/Users/jramirez/Git/avatar-pipeline/venv/bin/python -m
+> `170 passed` via `<project-root>/venv/bin/python -m
 > pytest -q` (only warning: pytest cache write blocked by sandbox).
 > Last updated: **2026-07-03 (latest) — fixed the WaveSpeed/Kling
 > "character_orientation='image' video duration must not exceed 10 seconds"
@@ -428,7 +428,7 @@
 > column, updated after `run_prepare()` when the source was too long.
 > The generated `links_status.csv` companion also has a `processing_note`
 > column. Main queue `links.numbers` remains read-only. Validation:
-> `168 passed` via `/Users/jramirez/Git/avatar-pipeline/venv/bin/python -m
+> `168 passed` via `<project-root>/venv/bin/python -m
 > pytest -q` (only warning: pytest cache write blocked by sandbox).
 > Last updated: **2026-07-03 (latest) — every yes/no reply now gets an
 > immediate Telegram acknowledgement of what's about to happen** (e.g.
@@ -487,7 +487,7 @@
 > requirement, PRODUCT-SPEC.md §5 #6). See "OUTPUT ENHANCEMENTS" section for
 > that detail, including a real timestamp-collision bug caught and fixed
 > via testing.
-> Working directory: `/Users/jramirez/Git/avatar-pipeline`.
+> Working directory: `<project-root>`.
 
 ## TELEGRAM FEEDBACK ENHANCEMENTS — read this first (2026-07-03, latest)
 
@@ -874,7 +874,7 @@ is false or `chat_id`/token are missing).
    grant — the operator clicked through
    `login.tailscale.com/f/funnel?node=...`); `tailscale funnel --bg 5678`
    is running (`tailscale funnel status` shows `https://<device>.<tailnet>.ts.net`
-   proxying to `http://127.0.0.1:5678`). `ops/launchd/com.jramirez.avatar.n8n.plist`'s
+   proxying to `http://127.0.0.1:5678`). `ops/launchd/n8n.plist.example`'s
    `WEBHOOK_URL` is now set to `https://<device>.<tailnet>.ts.net/` (was a
    placeholder), deployed to `~/Library/LaunchAgents/`, n8n restarted.
    **Verified**: `curl https://<device>.<tailnet>.ts.net/` → real HTTP/2 200
@@ -906,9 +906,9 @@ is false or `chat_id`/token are missing).
      **already-cached** job spec — it does NOT re-read the plist file from
      disk. So editing `WEBHOOK_URL` in the plist and just `kickstart`-ing did
      nothing; the running process had no `WEBHOOK_URL` at all. Fix: a full
-     unload+reload — `launchctl bootout gui/$(id -u)/com.jramirez.avatar.n8n`
+     unload+reload — `launchctl bootout gui/$(id -u)/<label-prefix>.n8n`
      then `launchctl bootstrap gui/$(id -u)
-     ~/Library/LaunchAgents/com.jramirez.avatar.n8n.plist` — confirmed via
+     ~/Library/LaunchAgents/<label-prefix>.n8n.plist` — confirmed via
      `ps eww <pid>` showing the real env afterward. Use this pattern (not
      `kickstart`) any time a plist's `EnvironmentVariables` change.
    - Hand-authoring a trigger-node's JSON (rather than creating it by
@@ -1180,9 +1180,9 @@ now reference-image based**, not LoRA based:
 
 The configured Seedream identity references are:
 
-- `/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/AvatarGirl/AvatarGirl.png`
-- `/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/AvatarGirl/AvatarGirl-SideProfile.png`
-- `/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/AvatarGirl/outputs/avatargirl_b2/013_selfie 2.png`
+- `<your iCloud Drive>/SocialAvatar/AvatarGirl/AvatarGirl.png`
+- `<your iCloud Drive>/SocialAvatar/AvatarGirl/AvatarGirl-SideProfile.png`
+- `<your iCloud Drive>/SocialAvatar/AvatarGirl/outputs/avatargirl_b2/013_selfie 2.png`
 
 The built-in Seedream prompt in `scripts/lib/avatar_frame_providers.py` tells
 Seedream that image 1 is the source frame and images 2+ are identity-only
@@ -1231,7 +1231,7 @@ conditioners, then optionally a very low-denoise refinement only if needed.
 1. Do **not** run animation and do **not** run full `worker.py`.
 2. Generate one FR-4 still only using the new 3-reference Seedream config.
    If continuing the same test, use:
-   `/Users/jramirez/Git/avatar-pipeline/work/ZP8sqeGdU/frame1.png`
+   `<project-root>/work/ZP8sqeGdU/frame1.png`
 3. Save the still under this Codex thread's `outputs/` folder and show it to
    the operator.
 4. Wait for explicit approval before any Kling/WaveSpeed animation call.
@@ -1244,7 +1244,7 @@ conditioners, then optionally a very low-denoise refinement only if needed.
 
 The LoRA is trained and local:
 
-`/Users/jramirez/llms/image-models/comfyui/loras/avatar_v1.safetensors`
+`<your models dir>/comfyui/loras/avatar_v1.safetensors`
 
 Keep it for local ComfyUI fallback, comparison tests, or generating more
 identity references. Do not spend time improving the LoRA path unless the
@@ -1315,8 +1315,8 @@ show the operator the FR-4 still and get explicit approval before animation.
 You are continuing an **already-built, mostly-set-up** local avatar video
 pipeline. Do NOT rebuild or re-architect anything. Read
 `docs/PRODUCT-SPEC.md` (authoritative spec), `README.md`, `SETUP.md` (root —
-operational guide), and `comfyui/README.md` before changing code. The operator
-is jramirez; machine is a MacBook Pro M1 Max 64 GB, macOS.
+operational guide), and `comfyui/README.md` before changing code. The operator's
+machine is a MacBook Pro M1 Max 64 GB, macOS.
 
 **What the system does now:** reads TikTok URLs (operator's own public posts)
 from an iCloud `.numbers` sheet, downloads the reference video, extracts
@@ -1358,7 +1358,7 @@ LoRA remains available as fallback/experimentation.
 - brew tools (ffmpeg/ffprobe/yt-dlp/exiftool); repo venv (Py 3.14) with full
   requirements incl. torch + **torchvision** (required by DINOv2 processor).
 - `config.yaml` live. iCloud layout: sheet at
-  `~/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/into-pipe/links.numbers`
+  `<your iCloud Drive>/SocialAvatar/Pipeline/into-pipe/links.numbers`
   (still has 3 EXAMPLE placeholder links), output to `.../Pipeline/out-pipe/`.
   `work_dir` stays local (`./work`) on purpose.
 - Avatar reference: `assets/avatar_reference.png` (installed from
@@ -1370,7 +1370,7 @@ LoRA remains available as fallback/experimentation.
   verified on-identity — low DINOv2 scores were scene-driven, expected).
   Zipped: `training/avatargirl_dataset.zip` (112 MB). Full RunPod runbook:
   `training/README.md`. Trigger token will be **"avatargirl woman"**.
-- **ComfyUI installed** at `~/ComfyUI` (venv Py 3.14, core deps ok) with
+- **ComfyUI installed** at `<comfyui-dir>` (venv Py 3.14, core deps ok) with
   custom nodes: Manager, comfyui_controlnet_aux, VideoHelperSuite, KJNodes,
   comfyui_segment_anything. `extra_model_paths.yaml` points at
   `~/llms/image-models/comfyui/` (all subfolders created).
@@ -1378,10 +1378,10 @@ LoRA remains available as fallback/experimentation.
   `n8n/workflow.json` now carries explicit `"id"` — required by import).
 - **launchd services — ALL THREE now loaded and healthy** (plists in
   `ops/launchd/`, copies in `~/Library/LaunchAgents`):
-  - `com.jramirez.avatar.gate` — DINOv2 gate :8189, MPS, weights cached;
+  - `<label-prefix>.gate` — DINOv2 gate :8189, MPS, weights cached;
     verified `/compare` works.
-  - `com.jramirez.avatar.n8n` — n8n :5678, responds 200.
-  - `com.jramirez.avatar.comfyui` — ComfyUI :8188, responds 200; the
+  - `<label-prefix>.n8n` — n8n :5678, responds 200.
+  - `<label-prefix>.comfyui` — ComfyUI :8188, responds 200; the
     `onnxruntime-gpu`→`onnxruntime` fix (IN FLIGHT #3, below) is applied and
     confirmed working, no import errors in `~/Library/Logs/avatar-comfyui.log`.
 
@@ -1408,11 +1408,11 @@ since changed — not anything wrong with our setup):
 
 Fixed with a monkeypatch, not by editing vendored files (survives node-pack
 updates) or downgrading `transformers` globally (would risk other nodes):
-**`~/ComfyUI/custom_nodes/zz_transformers_compat_patch/__init__.py`** — an
+**`<comfyui-dir>/custom_nodes/zz_transformers_compat_patch/__init__.py`** — an
 empty node pack (`NODE_CLASS_MAPPINGS = {}`) whose only job is to restore
 `PreTrainedModel.get_head_mask` and wrap `get_extended_attention_mask` to
 drop a stray `torch.device` argument. Restart ComfyUI
-(`launchctl kickstart -k gui/$(id -u)/com.jramirez.avatar.comfyui`) after any
+(`launchctl kickstart -k gui/$(id -u)/<label-prefix>.comfyui`) after any
 change to this file. If a future ComfyUI/transformers/segment_anything update
 makes this obsolete, it's safe to delete — the `hasattr` guard on
 `get_head_mask` makes it a no-op if already present upstream.
@@ -1502,7 +1502,7 @@ New token added to support this: `__LENGTH__` (frame count) — see
 
    **Live verification results (real API key, real files, real network
    calls — not guessed):** ran
-   `/private/tmp/claude-501/-Users-jramirez-Git-avatar-pipeline/f1d891fc-2125-446c-a14a-e0e65a629fd1/scratchpad/test_wavespeed_live.py`
+   `<scratchpad>/f1d891fc-2125-446c-a14a-e0e65a629fd1/scratchpad/test_wavespeed_live.py`
    (operator ran it in their own terminal with `WAVESPEED_API_KEY` exported,
    to keep the key out of any of my tool calls — see the security note at
    the end of this item). Confirmed against the REAL response bodies:
@@ -1549,11 +1549,11 @@ New token added to support this: `__LENGTH__` (frame count) — see
 
    **What's actually left, in order:**
    1. **Confirm `WAVESPEED_API_KEY` is in the DEPLOYED n8n launchd plist**
-      (`~/Library/LaunchAgents/com.jramirez.avatar.n8n.plist` — not just the
+      (`~/Library/LaunchAgents/<label-prefix>.n8n.plist` — not just the
       repo's `ops/launchd/` copy) — the operator was given the exact XML
       snippet to add themselves (same credential-handling reasoning as
       above: don't have an AI tool call touch the raw key) and asked to run
-      `launchctl kickstart -k gui/$(id -u)/com.jramirez.avatar.n8n`
+      `launchctl kickstart -k gui/$(id -u)/<label-prefix>.n8n`
       afterward. Verify this actually happened before relying on scheduled
       runs — check by confirming a real worker.py run picks up the key
       without the operator having exported it in that shell first.
@@ -1596,7 +1596,7 @@ New token added to support this: `__LENGTH__` (frame count) — see
    LoRA inpaint + FaceDetailer + upscale, ALL together) queued and executed
    successfully against `assets/avatar_reference.png` using the real
    `avatar_v1.safetensors` (epoch 8/final) — 73s, zero errors. Output:
-   `~/ComfyUI/output/avatar_frame1_00001_.png`. Background/scene correctly
+   `<comfyui-dir>/output/avatar_frame1_00001_.png`. Background/scene correctly
    preserved outside the person mask; identity reads recognizably as her;
    clothing changes (expected — the mask covers the whole person, not just
    the face, so outfit is regenerated along with identity — by design, not a
@@ -1637,7 +1637,7 @@ Kling Motion Control) are confirmed genuinely working as of 2026-07-03
 ## How to run / verify
 
 ```bash
-cd /Users/jramirez/Git/avatar-pipeline
+cd <project-root>
 ./scripts/setup_check.sh                       # doctor (binaries, services, config)
 ./venv/bin/python -m pytest tests/ -q          # 56 tests
 ./venv/bin/python scripts/worker.py --url "<url>" --config config.yaml --dry-run
@@ -1685,7 +1685,7 @@ Services are launchd-managed (see `ops/launchd/`); logs in
 - Worker/pick_next print exactly ONE JSON line on stdout (n8n parses it);
   logs go to stderr + `work/<id>/run.log`. Keep it that way.
 - The n8n launchd plist's `EnvironmentVariables.PATH` includes
-  `/opt/homebrew/bin` so worker subprocesses find ffmpeg/yt-dlp/exiftool —
+  `$(brew --prefix)/bin` so worker subprocesses find ffmpeg/yt-dlp/exiftool —
   and is where `WAVESPEED_API_KEY` would go if the cloud provider is ever
   enabled.
 - **How to author/debug any ComfyUI workflow without the UI**: `curl
@@ -1693,16 +1693,16 @@ Services are launchd-managed (see `ops/launchd/`); logs in
   required vs optional) on THIS install — never guess. `POST /prompt` gives
   immediate 400s with `node_errors` for type mismatches before any slow
   execution starts. For anything a node's name doesn't make obvious, read the
-  actual source: core nodes live in `~/ComfyUI/comfy_extras/nodes_*.py` (e.g.
+  actual source: core nodes live in `<comfyui-dir>/comfy_extras/nodes_*.py` (e.g.
   `WanAnimateToVideo` is core, not a custom node); official example workflows
   (if any exist for that node) are bundled at
-  `~/ComfyUI/venv/lib/python3.14/site-packages/comfyui_workflow_templates_json/templates/`
+  `<comfyui-dir>/venv/lib/python3.14/site-packages/comfyui_workflow_templates_json/templates/`
   — but note ComfyUI's newer "subgraph" feature nests the real node graph
   under the JSON's top-level `definitions.subgraphs[].nodes`, not the
   top-level `nodes` list; check both.
 - **`comfyui_segment_anything`'s bundled GroundingDINO code is written
   against a removed/changed `transformers` API** — see the two-bug writeup
-  above and `~/ComfyUI/custom_nodes/zz_transformers_compat_patch/`. If a
+  above and `<comfyui-dir>/custom_nodes/zz_transformers_compat_patch/`. If a
   similar `AttributeError`/signature-mismatch shows up in any other vendored
   custom node, the same monkeypatch-in-an-empty-node-pack technique applies:
   don't edit vendored files (survives updates), don't downgrade `transformers`

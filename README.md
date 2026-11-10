@@ -41,6 +41,18 @@ Still manual before the first real run: train + place the **character LoRA**,
 supply `assets/avatar_reference.png`, install ComfyUI + models, and export the
 two API workflows ([comfyui/README.md](comfyui/README.md)).
 
+## Local config
+Machine-specific settings live in two git-ignored files; the committed
+`config.example.yaml` and `.env.example` list every key with placeholders.
+- `config.yaml`: paths, thresholds, endpoints (copy from `config.example.yaml`).
+- `.env`: secrets plus `LAUNCHD_LABEL_PREFIX`, `COMFYUI_DIR`, `NODE_BIN_DIR`,
+  `N8N_WEBHOOK_URL` (copy from `.env.example`).
+
+The launchd plists under `ops/launchd/*.plist.example` are templates. Run
+`ops/install_launchd.sh` (or `--render-only`) to fill them from `.env` into
+`ops/launchd/generated/` (git-ignored) and copy them to `~/Library/LaunchAgents`.
+It never loads or starts a service; the `launchctl` commands are printed for you.
+
 ## Layout
 ```
 avatar-pipeline/

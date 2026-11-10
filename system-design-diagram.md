@@ -126,7 +126,7 @@
 ## Directory map
 
 ```
-~/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/   (iCloud — syncs to phone/other devices)
+<your iCloud Drive>/SocialAvatar/Pipeline/   (iCloud — syncs to phone/other devices)
 ├── into-pipe/
 │   ├── links.numbers                 INPUT, read-only, hand-edited by operator
 │   ├── links_status.csv              read-glance status companion (auto-regenerated
@@ -142,7 +142,7 @@
         └── <id>-video-<timestamp>.mp4     every animation attempt, PASS or FAIL
                                             (flat dir, nothing ever deleted)
 
-/Users/jramirez/Git/avatar-pipeline/   (repo — local, git-ignored working state)
+<project-root>/   (repo — local, git-ignored working state)
 ├── config.yaml                   live config (secrets NEVER live here — see .env)
 ├── config.example.yaml           safe/local template for new setups
 ├── .env                          WAVESPEED_API_KEY, TELEGRAM_BOT_TOKEN (gitignored)
@@ -209,7 +209,7 @@
 ├─────────────────────┼──────────┼────────────────────────────────────────────┤
 │ n8n                  │ :5678    │ Orchestrator — cron trigger + Telegram      │
 │                      │ (local,  │ webhook trigger. launchd-managed            │
-│                      │ tunneled)│ (com.jramirez.avatar.n8n)                   │
+│                      │ tunneled)│ (<label-prefix>.n8n)                   │
 ├─────────────────────┼──────────┼────────────────────────────────────────────┤
 │ Tailscale Funnel     │ public   │ Exposes n8n's webhook to the public         │
 │                      │ HTTPS    │ internet so Telegram can reach it —         │
@@ -240,13 +240,13 @@
 │ DINOv2 (face_gate.py)│ :8189,   │ FR-6: local, FREE identity-similarity gate  │
 │                      │ local    │ (cosine vs. assets/avatar_reference.png,     │
 │                      │          │ threshold 0.88). launchd-managed             │
-│                      │          │ (com.jramirez.avatar.gate)                   │
+│                      │          │ (<label-prefix>.gate)                   │
 ├─────────────────────┼──────────┼────────────────────────────────────────────┤
 │ ComfyUI               │ :8188,   │ Local FALLBACK for FR-4/FR-5 (provider:      │
 │                      │ local    │ "local_comfyui") — not in the active path    │
 │                      │          │ today (live config uses WaveSpeed for both), │
 │                      │          │ kept warm via launchd                        │
-│                      │          │ (com.jramirez.avatar.comfyui)                │
+│                      │          │ (<label-prefix>.comfyui)                │
 ├─────────────────────┼──────────┼────────────────────────────────────────────┤
 │ "mock" provider mode  │ in-      │ FREE stand-ins for FR-4/FR-5 (watermarked   │
 │                      │ process  │ frame copy / reference-video copy) — for     │

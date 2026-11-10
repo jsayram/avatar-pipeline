@@ -44,7 +44,7 @@ echo "── services ───────────────────�
 curl -s -o /dev/null --max-time 3 "http://localhost:8188/system_stats" \
   && ok "ComfyUI API (localhost:8188)" \
   || bad "ComfyUI API (localhost:8188)" \
-         "cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188"
+         "cd \$COMFYUI_DIR && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188"
 curl -s -o /dev/null --max-time 3 "http://localhost:8189/health" \
   && ok "identity gate (localhost:8189)" \
   || bad "identity gate (localhost:8189)" \

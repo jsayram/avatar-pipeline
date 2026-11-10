@@ -8,7 +8,7 @@ them once in the UI and export them.
 
 ## One-time export procedure (both workflows)
 
-1. Start ComfyUI (`cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0
+1. Start ComfyUI (`cd <comfyui-dir> && ./venv/bin/python main.py --listen 0.0.0.0
    --port 8188`) and open http://localhost:8188.
 2. Build/tune the workflow in the UI until a manual run produces a good result
    (this is the hands-on part — see the per-workflow notes below).
@@ -144,16 +144,16 @@ image + face-detail pass + upscale took ~2.3 minutes.
    immediate 400 with `node_errors` before any slow execution starts, so
    wiring mistakes are caught in seconds, not after a 20-minute render.
 4. For anything a node's name doesn't make obvious, read the source: core
-   nodes live in `~/ComfyUI/comfy_extras/nodes_*.py`. Official example
+   nodes live in `<comfyui-dir>/comfy_extras/nodes_*.py`. Official example
    workflows (when they exist) are bundled at
-   `~/ComfyUI/venv/lib/python3.14/site-packages/comfyui_workflow_templates_json/templates/`
+   `<comfyui-dir>/venv/lib/python3.14/site-packages/comfyui_workflow_templates_json/templates/`
    — note ComfyUI's "subgraph" feature nests the real graph under the JSON's
    `definitions.subgraphs[].nodes`, not the top-level `nodes` list.
 
 Two real ComfyUI bugs were found this way (both `transformers`-API version
 mismatches in `comfyui_segment_anything`'s vendored GroundingDINO code, not
 anything specific to this setup) and fixed via a monkeypatch shim at
-`~/ComfyUI/custom_nodes/zz_transformers_compat_patch/__init__.py` — see that
+`<comfyui-dir>/custom_nodes/zz_transformers_compat_patch/__init__.py` — see that
 file's docstring for the full detail if something similar recurs.
 
 Required tokens: `__AVATAR_IMAGE__`, `__REF_VIDEO__`, `__SEED__`.

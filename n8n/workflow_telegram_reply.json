@@ -19,11 +19,11 @@
           "name": "avatar-pipeline Telegram bot"
         }
       },
-      "notes": "Telegram API credential created in n8n's UI (Overview > Credentials tab > Telegram API, paste your bot token there — not under the Settings gear menu) — n8n stores it encrypted, separate from this file.\n\nIMPORTANT: this is a WEBHOOK trigger — Telegram must be able to reach this n8n instance over the public internet for messages to arrive at all. Solved via Tailscale Funnel — see docs/TAILSCALE-SETUP.md. n8n's WEBHOOK_URL env var (in ops/launchd/com.jramirez.avatar.n8n.plist) must match the Funnel hostname for the webhook registration to use the right public URL."
+      "notes": "Telegram API credential created in n8n's UI (Overview > Credentials tab > Telegram API, paste your bot token there — not under the Settings gear menu) — n8n stores it encrypted, separate from this file.\n\nIMPORTANT: this is a WEBHOOK trigger — Telegram must be able to reach this n8n instance over the public internet for messages to arrive at all. Solved via Tailscale Funnel — see docs/TAILSCALE-SETUP.md. n8n's WEBHOOK_URL env var (in ops/launchd/n8n.plist.example (rendered by ops/install_launchd.sh)) must match the Funnel hostname for the webhook registration to use the right public URL."
     },
     {
       "parameters": {
-        "command": "=cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/handle_telegram_reply.py --text \"{{ $json.message.text }}\" --config config.yaml || true"
+        "command": "=cd \"${AVATAR_PIPELINE_DIR:?set AVATAR_PIPELINE_DIR in the n8n service environment}\" && ./venv/bin/python scripts/handle_telegram_reply.py --text \"{{ $json.message.text }}\" --config config.yaml || true"
       },
       "id": "b1000000-0000-4000-8000-000000000002",
       "name": "Handle reply",

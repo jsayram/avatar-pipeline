@@ -42,11 +42,11 @@ TikTok's anti-bot detection checks the TLS/HTTP fingerprint of the request,
 not just cookies — without `curl_cffi`, yt-dlp can't mimic a real browser's
 fingerprint and TikTok may reject the request regardless of cookie validity.
 **yt-dlp runs its own isolated Python environment** (Homebrew formula,
-`/opt/homebrew/Cellar/yt-dlp/<version>/libexec/bin/python` — NOT this repo's
+`$(brew --prefix)/Cellar/yt-dlp/<version>/libexec/bin/python` — NOT this repo's
 `venv/`, NOT system `python3`), so the fix has to go into that specific
 interpreter:
 ```bash
-/opt/homebrew/Cellar/yt-dlp/<version>/libexec/bin/python -m pip install curl_cffi
+$(brew --prefix)/Cellar/yt-dlp/<version>/libexec/bin/python -m pip install curl_cffi
 ```
 Verify: `yt-dlp --list-impersonate-targets` should list real targets
 (Chrome/Safari/Firefox/etc.), not "(unavailable)" next to every one.
@@ -88,7 +88,7 @@ have nothing to do with this pipeline.
 as `tiktok_cookies.txt`.** One-liner (never prints cookie values, only
 processes the file):
 ```bash
-cd /Users/jramirez/Git/avatar-pipeline
+cd <project-root>
 {
   echo "# Netscape HTTP Cookie File"
   grep -v "^#" ~/Downloads/tiktok.com_cookies.txt | \
@@ -114,7 +114,7 @@ of your full cookie jar sitting around either.
    yourself (see the trap above) before it ever becomes `tiktok_cookies.txt`.
 4. Save the **filtered** (TikTok-only) file to:
    ```
-   /Users/jramirez/Git/avatar-pipeline/tiktok_cookies.txt
+   <project-root>/tiktok_cookies.txt
    ```
    (this exact path is already wired into `config.yaml`'s
    `video.cookies_file` — no config change needed once the file exists here)
@@ -134,7 +134,7 @@ Should include something like `sessionid` or `sid_tt` — if you only see
 capture a logged-in session; double check step 2.
 
 ```bash
-cd /Users/jramirez/Git/avatar-pipeline
+cd <project-root>
 ./venv/bin/python scripts/worker.py --config config.yaml --dry-run --url "https://www.tiktok.com/@example/video/1"
 ```
 Check the `warnings` list in the output — if `video.cookies_file is set but
@@ -144,7 +144,7 @@ means the file exists, not that the cookies inside are actually valid.
 To confirm the cookies actually work against a real gated video:
 
 ```bash
-yt-dlp --no-playlist -f mp4/best --no-part --cookies /Users/jramirez/Git/avatar-pipeline/tiktok_cookies.txt \
+yt-dlp --no-playlist -f mp4/best --no-part --cookies <project-root>/tiktok_cookies.txt \
   -o /tmp/test_dl.mp4 "https://www.tiktok.com/t/ZP8GDatEa"
 ```
 

@@ -123,10 +123,10 @@ SHOULD emit a local notification "today's avatar video is ready" on success.
 **`config.yaml`** (example):
 ```yaml
 paths:
-  numbers_sheet: "/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/links.numbers"
+  numbers_sheet: "<your iCloud Drive>/links.numbers"
   work_dir: "./work"
   out_dir: "./out"
-  lora_path: "/Users/jramirez/llms/image-models/comfyui/loras/avatar_v1.safetensors"
+  lora_path: "<your models dir>/comfyui/loras/avatar_v1.safetensors"
   avatar_reference: "./assets/avatar_reference.png"   # canonical identity image for the gate
 endpoints:
   comfyui_url: "http://localhost:8188"

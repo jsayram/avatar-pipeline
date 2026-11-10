@@ -91,7 +91,7 @@ Key principles:
 | `scripts/lib/runpod_pods.py` | Mirrors `lib/wavespeed_balance.py`: `GET https://rest.runpod.io/v1/pods` with Bearer `RUNPOD_API_KEY`; returns `{"configured": false}` when the env var is unset (verify exact REST field names against docs.runpod.io at implementation time) |
 | `scripts/lib/log_tail.py` | Reverse block-read tail (no full-file load) + fixed allowlist registry (`n8n/comfyui/gate/dashboard` → `~/Library/Logs/avatar-*.log`; `run:<id>` → `work/<id>/run.log` with id validated against existing dirs). Never accepts raw paths |
 | `scripts/static/index.html` + `app.js` + `style.css` | Single dark page (near-black `#0a0a0f`, panel `#141420`, blue/violet accents); vanilla `fetch` pollers (status 5s, jobs 2s while active, balance/pods/tailscale 60s) |
-| `ops/launchd/com.jramirez.avatar.dashboard.plist` | Clone of the gate plist; logs → `~/Library/Logs/avatar-dashboard.log` |
+| `ops/launchd/dashboard.plist.example` | Clone of the gate plist; logs → `~/Library/Logs/avatar-dashboard.log` |
 | `tests/test_dashboard_{api,jobs,media}.py`, `tests/test_{config_overrides,approval_lock,service_health,tailscale_status,runpod_pods,log_tail}.py` | See [Testing](#testing) |
 
 ## Modified files

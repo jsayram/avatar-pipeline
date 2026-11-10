@@ -3,21 +3,25 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.jramirez.avatar.gate</string>
+  <string>__LABEL_PREFIX__.comfyui</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/jramirez/Git/avatar-pipeline/venv/bin/python</string>
-    <string>/Users/jramirez/Git/avatar-pipeline/scripts/face_gate.py</string>
+    <string>__COMFYUI_DIR__/venv/bin/python</string>
+    <string>__COMFYUI_DIR__/main.py</string>
+    <string>--listen</string>
+    <string>127.0.0.1</string>
+    <string>--port</string>
+    <string>8188</string>
   </array>
   <key>WorkingDirectory</key>
-  <string>/Users/jramirez/Git/avatar-pipeline</string>
+  <string>__COMFYUI_DIR__</string>
   <key>RunAtLoad</key>
   <true/>
   <key>KeepAlive</key>
   <true/>
   <key>StandardOutPath</key>
-  <string>/Users/jramirez/Library/Logs/avatar-gate.log</string>
+  <string>__LOG_DIR__/avatar-comfyui.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/jramirez/Library/Logs/avatar-gate.log</string>
+  <string>__LOG_DIR__/avatar-comfyui.log</string>
 </dict>
 </plist>

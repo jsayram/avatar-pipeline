@@ -4,12 +4,12 @@
 # Relative paths are resolved against the directory containing this file.
 
 paths:
-  numbers_sheet: "/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/into-pipe/links.numbers"
+  numbers_sheet: "~/path/to/into-pipe/links.numbers"
   work_dir: "./work"
-  out_dir: "/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/SocialAvatar/Pipeline/out-pipe"
+  out_dir: "~/path/to/out-pipe"
   processed_json: "./processed.json"
   done_csv: "./done.csv"
-  lora_path: "/Users/jramirez/llms/image-models/comfyui/loras/avatar_v1.safetensors"
+  lora_path: "~/path/to/comfyui/loras/avatar_v1.safetensors"
   avatar_reference: "./assets/avatar_reference.png"   # canonical identity image for the gate
   workflows_dir: "./comfyui"                          # exported ComfyUI API workflow JSONs
   # status_sheet: read-glance companion CSV, fully regenerated after every
@@ -106,7 +106,7 @@ telegram:
 dashboard:
   port: 8190                    # local-only UI: http://127.0.0.1:8190
   log_tail_lines: 200
-  launchd_labels:
-    n8n: "com.jramirez.avatar.n8n"
-    gate: "com.jramirez.avatar.gate"
-    dashboard: "com.jramirez.avatar.dashboard"
+  # Service labels default to <LAUNCHD_LABEL_PREFIX>.n8n / .gate / .dashboard
+  # (prefix set in .env). Override individual ones here only if needed:
+  # launchd_labels:
+  #   n8n: "my.custom.label"

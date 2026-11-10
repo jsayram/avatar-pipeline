@@ -4,6 +4,8 @@
 <dict>
 	<key>EnvironmentVariables</key>
 	<dict>
+		<key>AVATAR_PIPELINE_DIR</key>
+		<string>__PROJECT_ROOT__</string>
 		<key>N8N_LISTEN_ADDRESS</key>
 		<string>127.0.0.1</string>
 		<key>N8N_SECURE_COOKIE</key>
@@ -14,30 +16,32 @@
 		     (e.g. the Telegram Trigger's setWebhook call). Must equal the
 		     Tailscale Funnel hostname, WITH a trailing slash. n8n keeps
 		     listening on localhost:5678; Funnel proxies public 443 -> 5678.
-		     Replace the placeholder below with your real ts.net host (get it
-		     from `tailscale funnel status` after enabling Funnel) and redeploy
-		     this plist. See docs/TAILSCALE-SETUP.md. -->
+		     Set N8N_WEBHOOK_URL in .env to your real ts.net host (get it from
+		     `tailscale funnel status` after enabling Funnel), then re-run
+		     ops/install_launchd.sh. See docs/TAILSCALE-SETUP.md.
+		     AVATAR_PIPELINE_DIR is read by the Execute Command nodes in
+		     n8n/workflow*.json. -->
 		<key>WEBHOOK_URL</key>
-		<string>https://your-machine.your-tailnet.ts.net/</string>
+		<string>__N8N_WEBHOOK_URL__</string>
 		<key>PATH</key>
-		<string>/Users/jramirez/.nvm/versions/node/v24.22.2/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<string>__NODE_BIN_DIR__:__HOMEBREW_BIN__:/usr/bin:/bin:/usr/sbin:/sbin</string>
 	</dict>
 	<key>KeepAlive</key>
 	<true/>
 	<key>Label</key>
-	<string>com.jramirez.avatar.n8n</string>
+	<string>__LABEL_PREFIX__.n8n</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Users/jramirez/.nvm/versions/node/v24.22.2/bin/node</string>
-		<string>/Users/jramirez/.nvm/versions/node/v24.22.2/bin/n8n</string>
+		<string>__NODE_BIN_DIR__/node</string>
+		<string>__NODE_BIN_DIR__/n8n</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StandardErrorPath</key>
-	<string>/Users/jramirez/Library/Logs/avatar-n8n.log</string>
+	<string>__LOG_DIR__/avatar-n8n.log</string>
 	<key>StandardOutPath</key>
-	<string>/Users/jramirez/Library/Logs/avatar-n8n.log</string>
+	<string>__LOG_DIR__/avatar-n8n.log</string>
 	<key>WorkingDirectory</key>
-	<string>/Users/jramirez</string>
+	<string>__HOME__</string>
 </dict>
 </plist>

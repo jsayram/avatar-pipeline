@@ -93,7 +93,7 @@ Notes:
 ls output/avatar_v1.safetensors        # ~200 MB
 # transfer back (runpodctl, scp, or download via the pod's Jupyter UI), then on the Mac:
 mv ~/Downloads/avatar_v1.safetensors \
-   /Users/jramirez/llms/image-models/comfyui/loras/avatar_v1.safetensors
+   <your models dir>/comfyui/loras/avatar_v1.safetensors
 ```
 
 Then **stop/terminate the pod** (billing stops).
@@ -101,7 +101,7 @@ Then **stop/terminate the pod** (billing stops).
 ## 5. Verify on the Mac
 
 ```bash
-cd /Users/jramirez/Git/avatar-pipeline
+cd <project-root>
 ./scripts/setup_check.sh          # LoRA line goes green via worker --dry-run
 ```
 

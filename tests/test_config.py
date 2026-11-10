@@ -5,7 +5,8 @@ from conftest import REPO_DIR
 from lib.config import ConfigError, load_config
 
 
-def test_example_config_loads_with_expected_defaults():
+def test_example_config_loads_with_expected_defaults(monkeypatch):
+    monkeypatch.setenv("LAUNCHD_LABEL_PREFIX", "test.avatar")
     cfg = load_config(REPO_DIR / "config.example.yaml")
     assert cfg.avatar_frame.provider == "local_comfyui"
     assert cfg.avatar_frame.wavespeed_model == "bytedance/seedream-v4.5/edit"
@@ -22,7 +23,7 @@ def test_example_config_loads_with_expected_defaults():
     assert cfg.endpoints.n8n_url == "http://localhost:5678"
     assert cfg.dashboard.port == 8190
     assert cfg.dashboard.log_tail_lines == 200
-    assert cfg.dashboard.launchd_labels["dashboard"] == "com.jramirez.avatar.dashboard"
+    assert cfg.dashboard.launchd_labels["dashboard"] == "test.avatar.dashboard"
 
 
 def test_cookies_file_resolves_relative_to_config_dir(make_config, tmp_path):

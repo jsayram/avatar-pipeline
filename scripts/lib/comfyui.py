@@ -141,7 +141,7 @@ class ComfyUIClient:
         except requests.ConnectionError as exc:
             raise ComfyUIUnreachable(
                 f"cannot reach ComfyUI at {self.base_url} — is it running? "
-                "(cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188)"
+                "(cd $COMFYUI_DIR && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188)"
             ) from exc
         if resp.status_code >= 400:
             raise ComfyUIError(

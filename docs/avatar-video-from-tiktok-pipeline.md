@@ -108,7 +108,7 @@ exiftool -all= -overwrite_original /work/clean/avatar_video.mp4      # belt-and-
 clears tool/creation metadata.)
 
 ### Step 8 — Publish + mark done
-- Move `avatar_video.mp4` → `/Users/jramirez/avatars/out/<YYYY-MM-DD>/`.
+- Move `avatar_video.mp4` → `<your output dir>/<YYYY-MM-DD>/`.
 - Append the link to `done.csv` (date, link, output path, gate score), add its id to
   `processed.json` so it never reruns. (Optional: write "done" back into the .numbers — §4.)
 
@@ -116,18 +116,18 @@ clears tool/creation metadata.)
 
 ## 4. The .numbers on iCloud (input handling)
 **Where it lives (synced locally):**
-`~/Library/Mobile Documents/com~apple~CloudDocs/<your_sheet>.numbers`
+`<your iCloud Drive>/<your_sheet>.numbers`
 
 **iCloud gotcha:** if the file shows as a placeholder (`.<name>.numbers.icloud`), it isn't
 downloaded yet. Force it:
 ```bash
-brctl download "~/Library/Mobile Documents/com~apple~CloudDocs/<your_sheet>.numbers"
+brctl download "<your iCloud Drive>/<your_sheet>.numbers"
 ```
 
 **Read it (Python):**
 ```python
 from numbers_parser import Document
-doc = Document("/Users/jramirez/Library/Mobile Documents/com~apple~CloudDocs/links.numbers")
+doc = Document("<your iCloud Drive>/links.numbers")
 rows = doc.sheets[0].tables[0].rows(values_only=True)
 links = [r[0] for r in rows[1:] if r and r[0]]      # column A = TikTok URLs
 ```

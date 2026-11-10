@@ -127,7 +127,7 @@ ComfyUI defaults to `ComfyUI/models/`. Point it at your central store instead wi
 `ComfyUI/extra_model_paths.yaml`:
 ```yaml
 llms:
-  base_path: /Users/jramirez/llms/image-models/comfyui
+  base_path: <your models dir>/comfyui
   checkpoints: checkpoints
   loras: loras
   vae: vae

@@ -7,6 +7,7 @@ the scripts from any working directory.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -350,10 +351,12 @@ def load_config(config_path: str | Path, *, apply_overrides: bool = True) -> Con
         raw_labels = {}
     if not isinstance(raw_labels, dict):
         raise ConfigError("dashboard.launchd_labels must be a mapping")
+    # Same prefix ops/install_launchd.sh uses to name the services (.env).
+    label_prefix = os.environ.get("LAUNCHD_LABEL_PREFIX") or "com.example.avatar"
     default_labels = {
-        "n8n": "com.jramirez.avatar.n8n",
-        "gate": "com.jramirez.avatar.gate",
-        "dashboard": "com.jramirez.avatar.dashboard",
+        "n8n": f"{label_prefix}.n8n",
+        "gate": f"{label_prefix}.gate",
+        "dashboard": f"{label_prefix}.dashboard",
     }
     launchd_labels = {
         **default_labels,

@@ -51,3 +51,6 @@ CLAUDE.md
 
 # os
 .DS_Store
+
+# real launchd plists rendered by ops/install_launchd.sh
+ops/launchd/generated/

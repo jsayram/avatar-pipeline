@@ -15,7 +15,7 @@ enable the WaveSpeed animation provider (§8).
 brew install ffmpeg yt-dlp exiftool
 
 # Python environment (one venv serves the worker, pick_next, and the gate)
-cd /Users/jramirez/Git/avatar-pipeline
+cd <project-root>
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
 ```
@@ -38,7 +38,7 @@ Defaults already match this machine: `.numbers` sheet in iCloud Drive, LoRA at
 
 1. Install ComfyUI + venv, run in API mode:
    ```bash
-   git clone https://github.com/comfyanonymous/ComfyUI ~/ComfyUI && cd ~/ComfyUI
+   git clone https://github.com/comfyanonymous/ComfyUI <comfyui-dir> && cd <comfyui-dir>
    python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
    ./venv/bin/python main.py --listen 0.0.0.0 --port 8188
    ```
@@ -68,10 +68,10 @@ Defaults already match this machine: `.numbers` sheet in iCloud Drive, LoRA at
 
 ```bash
 # ComfyUI (terminal 1)
-cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188
+cd <comfyui-dir> && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188
 
 # DINOv2 identity gate (terminal 2) — first start downloads the model, then offline
-cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/face_gate.py
+cd <project-root> && ./venv/bin/python scripts/face_gate.py
 # health check: curl http://localhost:8189/health
 
 # Web dashboard (terminal 3, optional) — mission-control UI on 127.0.0.1:8190
@@ -89,8 +89,10 @@ Design doc: `docs/WEB-UI-PLAN.md`.
 
 ```bash
 # Run as a launchd service instead of a terminal (mirrors the gate service):
-cp ops/launchd/com.jramirez.avatar.dashboard.plist ~/Library/LaunchAgents/
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jramirez.avatar.dashboard.plist
+# Fill the committed templates from .env (LAUNCHD_LABEL_PREFIX etc.) and copy
+# them to ~/Library/LaunchAgents. The script never loads or starts anything.
+ops/install_launchd.sh dashboard
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/<label-prefix>.dashboard.plist
 # logs: ~/Library/Logs/avatar-dashboard.log
 
 # Reach it from your phone/laptop anywhere via your PRIVATE tailnet:
@@ -141,8 +143,9 @@ Import: **n8n UI → Workflows → ⋯ → Import from File →
 daily at 02:00 (`schedule.cron` in config.yaml is the same value — change
 both if you reschedule). The workflow has a 12 h execution timeout.
 
-- The Execute Command nodes use the absolute repo path
-  `/Users/jramirez/Git/avatar-pipeline` — edit them if the repo moves.
+- The Execute Command nodes `cd` into `$AVATAR_PIPELINE_DIR`, which
+  `ops/install_launchd.sh` sets in the n8n service environment (it is the
+  repo root). Re-render and restart the n8n service if the repo moves.
 - Email notifications: set `notifications.provider: email`, then add an n8n
   **Send Email** node (with your SMTP credentials) after the `Published?`
   true-branch. The `macos` provider needs no setup.
@@ -181,9 +184,9 @@ remaining switch:
 
 - **Environment (never in config): `export WAVESPEED_API_KEY=<key>`** — get a
   key at https://wavespeed.ai. For scheduled n8n runs, add it to
-  `EnvironmentVariables` in `ops/launchd/com.jramirez.avatar.n8n.plist` and
+  `EnvironmentVariables` in `ops/launchd/n8n.plist.example` (then re-run `ops/install_launchd.sh n8n`) and
   reload the service (`launchctl kickstart -k
-  gui/$(id -u)/com.jramirez.avatar.n8n`), since a plain shell `export` doesn't
+  gui/$(id -u)/<label-prefix>.n8n`), since a plain shell `export` doesn't
   propagate to an already-running launchd service.
 
 How it works: the provider uploads the avatar frame + reference video to

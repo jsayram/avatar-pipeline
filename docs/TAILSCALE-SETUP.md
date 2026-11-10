@@ -23,13 +23,13 @@ Tailscale is the only thing exposed, and only the one port you choose.
 - **Funnel enabled and running**: `tailscale funnel --bg 5678` is active.
   `tailscale funnel status` shows `https://<device>.<tailnet>.ts.net`
   proxying to `http://127.0.0.1:5678`.
-- **n8n plist wired**: `ops/launchd/com.jramirez.avatar.n8n.plist`'s
+- **n8n plist wired**: `ops/launchd/n8n.plist.example`'s
   `WEBHOOK_URL` is set to `https://<device>.<tailnet>.ts.net/`, deployed to
   `~/Library/LaunchAgents/`, n8n restarted and picked it up.
 - **Verified end-to-end**: `curl https://<device>.<tailnet>.ts.net/` returns
   a real `HTTP/2 200` serving the n8n editor HTML — the public tunnel works.
   (Real hostname redacted here — see your locally-deployed
-  `~/Library/LaunchAgents/com.jramirez.avatar.n8n.plist` for the actual value.)
+  `~/Library/LaunchAgents/<label-prefix>.n8n.plist` for the actual value.)
 
 Persists across reboots as long as the Mac stays logged into Tailscale
 (check with `tailscale status` — should show the device, not "Logged out").
@@ -97,20 +97,20 @@ to me** and I'll finish step 4, or do it yourself below.
 
 ### 4. Point n8n's WEBHOOK_URL at the Funnel hostname
 
-Edit `ops/launchd/com.jramirez.avatar.n8n.plist` — replace the placeholder
-`WEBHOOK_URL` value with your real hostname **(keep the trailing slash)**:
+Set `N8N_WEBHOOK_URL` in your git-ignored `.env` to your real hostname
+**(keep the trailing slash)**:
 
-```xml
-<key>WEBHOOK_URL</key>
-<string>https://your-macbook.tailXXXX.ts.net/</string>
+```
+N8N_WEBHOOK_URL=https://your-macbook.tailXXXX.ts.net/
 ```
 
-Then redeploy the plist (the pattern used for all `com.jramirez.avatar.*`
-services — the live copy lives in `~/Library/LaunchAgents/`):
+Then re-render the plist from `ops/launchd/n8n.plist.example` (the same
+pattern serves all `<label-prefix>.*` services — the live copy lives in
+`~/Library/LaunchAgents/`) and restart n8n yourself:
 
 ```bash
-cp ops/launchd/com.jramirez.avatar.n8n.plist ~/Library/LaunchAgents/
-launchctl kickstart -k gui/$(id -u)/com.jramirez.avatar.n8n
+ops/install_launchd.sh n8n
+launchctl kickstart -k gui/$(id -u)/<label-prefix>.n8n
 ```
 
 Verify n8n now believes it's public:

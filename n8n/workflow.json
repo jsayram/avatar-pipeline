@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "command": "cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/pick_next.py --config config.yaml || true"
+        "command": "cd \"${AVATAR_PIPELINE_DIR:?set AVATAR_PIPELINE_DIR in the n8n service environment}\" && ./venv/bin/python scripts/pick_next.py --config config.yaml || true"
       },
       "id": "a1000000-0000-4000-8000-000000000002",
       "name": "Pick next link",
@@ -71,7 +71,7 @@
     },
     {
       "parameters": {
-        "command": "=cd /Users/jramirez/Git/avatar-pipeline && ./venv/bin/python scripts/worker.py --phase prepare --id \"{{ $json.id }}\" --url \"{{ $json.url }}\" --config config.yaml || true"
+        "command": "=cd \"${AVATAR_PIPELINE_DIR:?set AVATAR_PIPELINE_DIR in the n8n service environment}\" && ./venv/bin/python scripts/worker.py --phase prepare --id \"{{ $json.id }}\" --url \"{{ $json.url }}\" --config config.yaml || true"
       },
       "id": "a1000000-0000-4000-8000-000000000005",
       "name": "Run worker (prepare)",
